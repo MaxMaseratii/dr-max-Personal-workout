@@ -1,15 +1,14 @@
 {
-  "name": "DrMax Work-Out",
-  "short_name": "DrMax",
+  "name": "DMWC · DrMax Work-Out",
+  "short_name": "DMWC",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0C",
   "theme_color": "#0A0A0C",
   "icons": [
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111114'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E",
-      "sizes": "64x64",
-      "type": "image/svg+xml"
-    }
+    { "src": "favicon-64.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
