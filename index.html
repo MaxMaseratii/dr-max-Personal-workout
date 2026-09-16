@@ -1,1 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. Max Personal Work-out Program</title>
+<meta name="theme-color" content="#0B1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dr Max">
+<link rel="apple-touch-icon" href="images/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --bg:#0B1220;
+    --bg-elev:#0F1830;
+    --card:#141F38;
+    --card-border:#243252;
+    --text:#E9EDF6;
+    --text-dim:#8FA1C4;
+    --accent:#F2B705;
+    --accent-dim:#a9840e;
+    --steel:#3E7CB8;
+    --good:#3FA857;
+    --warn:#E0A339;
+    --off:#3A465F;
+    --rest:#5C6B8A;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 0;}
 
+  header.top{padding:6px 0 18px;}
+  header.top h1{
+    font-size:26px;font-weight:800;letter-spacing:-0.02em;margin:0 0 4px;
+    background:linear-gradient(90deg,var(--accent),#ffe08a);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  header.top p{margin:0;color:var(--text-dim);font-size:14px;}
+
+  .sleep-bar{
+    display:flex;gap:10px;background:var(--bg-elev);border:1px solid var(--card-border);
+    border-radius:var(--radius);padding:14px;margin-bottom:18px;
+  }
+  .sleep-item{flex:1;text-align:center;}
+  .sleep-item .label{font-size:11px;color:var(--text-dim);margin-bottom:4px;}
+  .sleep-item .val{font-size:17px;font-weight:700;color:var(--text);}
+  .sleep-item .sub{font-size:11px;color:var(--accent);margin-top:2px;}
+  .sleep-divider{width:1px;background:var(--card-border);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .tab-btn{
+    flex:1;padding:10px 6px;background:var(--bg-elev);border:1px solid var(--card-border);
+    border-radius:10px;color:var(--text-dim);font-weight:700;font-size:13px;cursor:pointer;
+  }
+  .tab-btn.active{background:var(--accent);color:#1a1204;border-color:var(--accent);}
+
+  .day-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .day-nav button.arrow{
+    background:var(--card);border:1px solid var(--card-border);color:var(--text);
+    width:36px;height:36px;border-radius:10px;font-size:16px;cursor:pointer;flex-shrink:0;
+  }
+  .day-nav .day-info{flex:1;text-align:center;}
+  .day-nav .day-info .dow{font-size:12px;color:var(--text-dim);}
+  .day-nav .day-info .date{font-size:16px;font-weight:700;}
+  .today-pill{
+    display:inline-block;margin-left:6px;font-size:10px;background:var(--accent);
+    color:#1a1204;padding:2px 7px;border-radius:20px;font-weight:800;vertical-align:middle;
+  }
+
+  .day-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+  .day-title h2{font-size:19px;margin:0;font-weight:800;}
+  .day-title .count{font-size:13px;color:var(--text-dim);}
+
+  .progress-outer{height:8px;background:var(--off);border-radius:20px;overflow:hidden;margin-bottom:18px;}
+  .progress-inner{height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent));border-radius:20px;transition:width .3s ease;}
+
+  .rest-card{
+    background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
+    padding:28px 20px;text-align:center;color:var(--text-dim);
+  }
+  .rest-card h3{color:var(--text);margin:0 0 6px;font-size:17px;}
+
+  /* Exercise card */
+  .ex-card{
+    background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
+    padding:14px;margin-bottom:12px;
+  }
+  .ex-card.done{border-color:var(--good);}
+  .ex-card.done .ex-name{opacity:.6;}
+  .ex-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
+  .ex-name{font-weight:700;font-size:15px;}
+  .ex-check{flex-shrink:0;}
+  .ex-check input{
+    appearance:none;-webkit-appearance:none;width:26px;height:26px;border-radius:8px;
+    border:2px solid var(--off);background:var(--bg-elev);cursor:pointer;position:relative;
+  }
+  .ex-check input:checked{background:var(--good);border-color:var(--good);}
+  .ex-check input:checked::after{
+    content:"\2713";position:absolute;top:50%;left:50%;transform:translate(-50%,-52%);
+    color:#08150a;font-weight:800;font-size:15px;
+  }
+
+  .ex-diagram{
+    background:#fff;border-radius:10px;padding:6px;margin-bottom:10px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ex-diagram img{max-width:100%;max-height:280px;width:100%;height:auto;display:block;border-radius:6px;object-fit:contain;}
+
+  .cue-text{
+    font-size:13px;color:var(--text);line-height:1.45;margin-bottom:10px;
+    background:var(--bg-elev);border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 8px 8px 0;
+  }
+
+  .muscle-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .muscle-chip{
+    font-size:11px;font-weight:700;color:#ffb3b3;background:rgba(230,70,70,.14);
+    border:1px solid rgba(230,70,70,.35);padding:3px 8px;border-radius:20px;
+  }
+
+  .ex-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px;margin-bottom:8px;}
+  .ex-meta span{background:var(--bg-elev);color:var(--text-dim);padding:2px 7px;border-radius:6px;}
+
+  .watch-btn{display:inline-block;font-size:11.5px;font-weight:700;color:#ff4d4d;text-decoration:none;}
+  .watch-btn:active{opacity:.7;}
+
+  /* Progress / calendar tab */
+  .streak-card{
+    display:flex;gap:14px;background:var(--bg-elev);border:1px solid var(--card-border);
+    border-radius:var(--radius);padding:16px;margin-bottom:18px;
+  }
+  .streak-num{font-size:32px;font-weight:800;color:var(--accent);line-height:1;}
+  .streak-label{font-size:12px;color:var(--text-dim);margin-top:4px;}
+  .streak-sep{width:1px;background:var(--card-border);}
+
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .month-nav h3{font-size:17px;margin:0;font-weight:800;}
+  .month-nav button{
+    background:var(--card);border:1px solid var(--card-border);color:var(--text);
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+  }
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;}
+  .cal-dow{text-align:center;font-size:10.5px;color:var(--text-dim);padding-bottom:4px;}
+  .cal-cell{
+    aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;background:var(--card);border:1px solid var(--card-border);color:var(--text-dim);
+    position:relative;
+  }
+  .cal-cell.empty{background:transparent;border:none;}
+  .cal-cell.complete{background:var(--good);color:#062a0d;border-color:var(--good);}
+  .cal-cell.partial{background:var(--warn);color:#2a1c04;border-color:var(--warn);}
+  .cal-cell.rest{background:var(--rest);color:#fff;border-color:var(--rest);}
+  .cal-cell.missed{background:var(--bg-elev);color:var(--off);}
+  .cal-cell.today-cell{box-shadow:0 0 0 2px var(--accent);}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--text-dim);}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+  .note{
+    margin-top:22px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--card-border);
+    border-radius:10px;font-size:12.5px;color:var(--text-dim);line-height:1.5;
+  }
+  .note b{color:var(--text);}
+
+  /* Fuel / nutrition */
+  .fuel-card{
+    background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;
+  }
+  .fuel-card h3{margin:0 0 8px;font-size:16px;font-weight:800;}
+  .fuel-card p{margin:0 0 10px;color:var(--text-dim);font-size:13px;line-height:1.5;}
+  .target-row{display:flex;gap:8px;margin-bottom:12px;}
+  .target-pill{
+    flex:1;background:var(--bg-elev);border:1px solid var(--card-border);border-radius:10px;
+    padding:10px 8px;text-align:center;
+  }
+  .target-pill .k{font-size:11px;color:var(--text-dim);}
+  .target-pill .v{font-size:15px;font-weight:800;margin-top:3px;}
+  .meal{
+    background:var(--bg-elev);border-radius:10px;padding:10px 12px;margin-bottom:8px;
+  }
+  .meal .when{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;}
+  .meal .what{font-size:13.5px;font-weight:700;margin-top:2px;}
+  .meal .how{font-size:12.5px;color:var(--text-dim);margin-top:3px;line-height:1.4;}
+  .water-wrap{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 8px;}
+  .glass{
+    width:34px;height:44px;border-radius:8px 8px 6px 6px;border:2px solid var(--steel);
+    background:transparent;cursor:pointer;position:relative;
+  }
+  .glass.on{background:linear-gradient(180deg,#4aa3e8,#2b6ea8);border-color:#7ec8ff;}
+  .water-meta{font-size:13px;color:var(--text-dim);}
+  .water-meta b{color:var(--text);}
+  .timeline{display:flex;flex-direction:column;gap:8px;}
+  .tl-row{display:grid;grid-template-columns:88px 1fr;gap:10px;align-items:start;}
+  .tl-when{font-size:12px;font-weight:800;color:var(--accent);padding-top:2px;}
+  .tl-what{font-size:13px;color:var(--text);line-height:1.4;}
+  .tl-what span{color:var(--text-dim);}
+
+  .install-hero{
+    display:flex;align-items:center;gap:14px;margin-bottom:12px;
+  }
+  .install-hero img{
+    width:72px;height:72px;border-radius:16px;display:block;
+    box-shadow:0 8px 20px rgba(0,0,0,.35);
+  }
+  .step-list{margin:0;padding:0;list-style:none;}
+  .step-list li{
+    display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;
+    font-size:13.5px;line-height:1.4;
+  }
+  .step-num{
+    flex-shrink:0;width:24px;height:24px;border-radius:50%;
+    background:var(--accent);color:#1a1204;font-weight:800;font-size:12px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .install-pic{
+    background:#081018;border-radius:10px;padding:6px;margin:10px 0 4px;
+  }
+  .install-pic img{width:100%;height:auto;display:block;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Dr. Max Personal Work-out Program</h1>
+    <p>5:00 AM wake &middot; V-taper split &middot; food, water &amp; training on one page</p>
+  </header>
+
+  <div class="sleep-bar">
+    <div class="sleep-item">
+      <div class="label">Wake</div>
+      <div class="val">5:00&ndash;5:15 AM</div>
+      <div class="sub">Straight into training</div>
+    </div>
+    <div class="sleep-divider"></div>
+    <div class="sleep-item">
+      <div class="label">Train</div>
+      <div class="val">5:15&ndash;6:30 AM</div>
+      <div class="sub">~75 min window</div>
+    </div>
+    <div class="sleep-divider"></div>
+    <div class="sleep-item">
+      <div class="label">Lights out</div>
+      <div class="val">9:00 PM</div>
+      <div class="sub">~8 hrs sleep</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabTodayBtn" onclick="showTab('today')">Workout</button>
+    <button class="tab-btn" id="tabFuelBtn" onclick="showTab('fuel')">Fuel</button>
+    <button class="tab-btn" id="tabProgressBtn" onclick="showTab('progress')">Month</button>
+    <button class="tab-btn" id="tabPhoneBtn" onclick="showTab('phone')">Phone</button>
+  </div>
+
+  <div id="tabToday">
+    <div class="day-nav">
+      <button class="arrow" onclick="shiftDay(-1)">&larr;</button>
+      <div class="day-info">
+        <div class="dow" id="dowLabel"></div>
+        <div class="date" id="dateLabel"></div>
+      </div>
+      <button class="arrow" onclick="shiftDay(1)">&rarr;</button>
+    </div>
+
+    <div class="day-title">
+      <h2 id="dayPlanTitle"></h2>
+      <span class="count" id="dayCount"></span>
+    </div>
+    <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
+
+    <div id="exerciseList"></div>
+  </div>
+
+  <div id="tabFuel" style="display:none;">
+    <div class="fuel-card">
+      <h3>Daily targets</h3>
+      <p>Built for this 5 AM V-taper split. Adjust portions to your body weight — protein is the number that matters most.</p>
+      <div class="target-row">
+        <div class="target-pill"><div class="k">Water</div><div class="v">3.0–3.5 L</div></div>
+        <div class="target-pill"><div class="k">Protein</div><div class="v">1.8 g / kg</div></div>
+        <div class="target-pill"><div class="k">Meals</div><div class="v">4 + snack</div></div>
+      </div>
+      <p style="margin:0;font-size:12.5px;">Example: 80 kg person → about <b style="color:var(--text)">145 g protein</b> a day. If you want to lean out, keep carbs a bit lower at dinner. If you want to grow, add a cup of rice or oats.</p>
+    </div>
+
+    <div class="fuel-card">
+      <h3>Water today</h3>
+      <p>3.2 L = 8 glasses of 400 ml. Drink one glass when you wake, one after training, then sip through the day. Finish 1 hour before lights out so sleep stays clean.</p>
+      <div class="water-wrap" id="waterWrap"></div>
+      <div class="water-meta" id="waterMeta">0 / 3.2 L</div>
+    </div>
+
+    <div class="fuel-card">
+      <h3>Everyday meal plan</h3>
+      <p>Eat this pattern 6 training days. On Sunday rest, keep the same meals but you can drop the post-workout shake if you prefer whole food.</p>
+      <div class="meal">
+        <div class="when">4:50 AM · pre-workout (optional)</div>
+        <div class="what">Banana + black coffee, or 200 ml water if you train fasted</div>
+        <div class="how">Keep it light so the 5:15 session does not sit heavy. If you feel flat, add a spoon of honey.</div>
+      </div>
+      <div class="meal">
+        <div class="when">6:40 AM · after training</div>
+        <div class="what">Protein shake + 1 fruit, or 3 eggs + toast</div>
+        <div class="how">25–40 g protein in the first hour after lifting. This is the meal that feeds the back and shoulders you just trained.</div>
+      </div>
+      <div class="meal">
+        <div class="when">12:30 PM · lunch</div>
+        <div class="what">Palm-size chicken, fish, lean beef or tofu · 1 fist rice / potato · big salad or veg</div>
+        <div class="how">Add olive oil or avocado. This should be your biggest meal on training days.</div>
+      </div>
+      <div class="meal">
+        <div class="when">4:00 PM · snack</div>
+        <div class="what">Greek yoghurt + berries, or cottage cheese, or a second shake</div>
+        <div class="how">20 g protein. Stops the 5 PM crash that usually turns into junk food.</div>
+      </div>
+      <div class="meal">
+        <div class="when">7:00–7:30 PM · dinner</div>
+        <div class="what">Protein + vegetables + a smaller carb (or extra veg if leaning out)</div>
+        <div class="how">Finish eating by 8:00 PM so 9:00 lights-out is realistic. Keep it low-oil and low-sugar.</div>
+      </div>
+    </div>
+
+    <div class="fuel-card">
+      <h3>Simple plate rules</h3>
+      <p style="margin-bottom:8px;"><b style="color:var(--text)">Every plate:</b> protein first, then vegetables, then carbs around training.</p>
+      <p style="margin-bottom:8px;"><b style="color:var(--text)">Drink:</b> water, black coffee, tea. Skip juice and fizzy drinks — they hide a lot of sugar.</p>
+      <p style="margin-bottom:8px;"><b style="color:var(--text)">Salt &amp; minerals:</b> a pinch of salt on meals plus a banana or yoghurt covers most early-morning sessions.</p>
+      <p style="margin:0;"><b style="color:var(--text)">Off-limits most days:</b> late-night takeaway, alcohol on training nights, “I earned this” desserts after every workout.</p>
+    </div>
+
+    <div class="fuel-card">
+      <h3>When you will see a change</h3>
+      <p>If you hit the workouts, protein, water and 9 PM sleep. Miss those and the calendar stretches.</p>
+      <div class="timeline">
+        <div class="tl-row"><div class="tl-when">7 days</div><div class="tl-what">Better energy at 5 AM, less bloating, sleep feels deeper. <span>The mirror barely moves yet — that is normal.</span></div></div>
+        <div class="tl-row"><div class="tl-when">14–21 days</div><div class="tl-what">Stronger pumps, clothes at the waist feel a bit easier, pull-ups and presses go up. <span>Friends may not notice. You will.</span></div></div>
+        <div class="tl-row"><div class="tl-when">6–8 weeks</div><div class="tl-what">Shoulders look wider, waist looks tighter, back has more lines in photos. <span>This is the first real “V” you can see.</span></div></div>
+        <div class="tl-row"><div class="tl-when">12–16 weeks</div><div class="tl-what">Clear V-taper in a T-shirt if you stayed consistent. <span>That is one full training block — not a weekend reset.</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabProgress" style="display:none;">
+    <div class="streak-card">
+      <div>
+        <div class="streak-num" id="streakNum">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+      <div class="streak-sep"></div>
+      <div>
+        <div class="streak-num" id="monthCompleteNum">0</div>
+        <div class="streak-label">full days this month</div>
+      </div>
+    </div>
+
+    <div class="month-nav">
+      <button onclick="shiftMonth(-1)">&larr;</button>
+      <h3 id="monthLabel"></h3>
+      <button onclick="shiftMonth(1)">&rarr;</button>
+    </div>
+
+    <div class="cal-grid" id="calDow"></div>
+    <div class="cal-grid" id="calGrid"></div>
+
+    <div class="legend">
+      <span><i style="background:var(--good)"></i>All done</span>
+      <span><i style="background:var(--warn)"></i>Partial</span>
+      <span><i style="background:var(--rest)"></i>Rest day</span>
+      <span><i style="background:var(--bg-elev);border:1px solid var(--card-border)"></i>Missed</span>
+    </div>
+  </div>
+
+  <div id="tabPhone" style="display:none;">
+    <div class="fuel-card">
+      <div class="install-hero">
+        <img src="images/icon-180.png" alt="Dr Max app icon">
+        <div>
+          <h3 style="margin:0 0 4px;">Put it on your home screen</h3>
+          <p style="margin:0;">Opens full-screen like an app, with this gold M icon. First open the page in the phone browser — not as a raw file from Downloads.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fuel-card">
+      <h3>iPhone</h3>
+      <p>Must be Safari. Chrome on iPhone cannot add a home-screen app.</p>
+      <ol class="step-list">
+        <li><span class="step-num">1</span><span>Open this page in <b>Safari</b>.</span></li>
+        <li><span class="step-num">2</span><span>Tap the <b>Share</b> button (square with an arrow up) at the bottom.</span></li>
+        <li><span class="step-num">3</span><span>Scroll the sheet and tap <b>Add to Home Screen</b>.</span></li>
+        <li><span class="step-num">4</span><span>Name it <b>Dr Max</b> and tap <b>Add</b>. The gold M lands on your home screen.</span></li>
+      </ol>
+      <div class="install-pic"><img src="images/install-iphone.jpg" alt="iPhone add to home screen steps"></div>
+    </div>
+
+    <div class="fuel-card">
+      <h3>Android</h3>
+      <p>Use Chrome. Samsung Internet has the same idea under the menu.</p>
+      <ol class="step-list">
+        <li><span class="step-num">1</span><span>Open this page in <b>Chrome</b>.</span></li>
+        <li><span class="step-num">2</span><span>Tap the <b>three dots</b> at the top right.</span></li>
+        <li><span class="step-num">3</span><span>Tap <b>Add to Home screen</b> or <b>Install app</b>.</span></li>
+        <li><span class="step-num">4</span><span>Tap <b>Add</b>. The gold M appears with your other apps.</span></li>
+      </ol>
+      <div class="install-pic"><img src="images/install-android.jpg" alt="Android add to home screen steps"></div>
+    </div>
+
+    <div class="fuel-card">
+      <h3>If Add to Home Screen is missing</h3>
+      <p>That usually means the file was opened from Files / Downloads, not in the browser address bar. Fix: email the HTML to yourself, or upload the zip to Drive / iCloud, tap it, choose <b>Open in Safari</b> or <b>Chrome</b>, then follow the pictures above. A page on https works most reliably.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Diagrams</b> show start and finish, the working muscle in red, and a short cue. Fuel targets are general coaching, not medical advice — if you have a condition, check with a clinician. Ticks and water glasses save on this device.
+  </div>
+</div>
+
+<script>
+/* ---------- Storage layer ---------- */
+const memStore = {};
+async function storeGet(key){
+  try{ if(window.storage){ const r = await window.storage.get(key); return r ? r.value : null; } }catch(e){}
+  return memStore[key] ?? null;
+}
+async function storeSet(key,val){
+  try{ if(window.storage){ await window.storage.set(key,val); return; } }catch(e){}
+  memStore[key]=val;
+}
+
+/* ---------- Exercise data ---------- */
+const WEEK = [
+  { name:'Sunday', title:'Rest Day', type:'rest', exercises:[] },
+  { name:'Monday', title:'Back Width', type:'train', exercises:[
+    {id:'mon1',name:'Wide-Grip Lat Pulldown',sets:4,reps:'10-12',rest:'90s',weight:'35-45 kg',pattern:'pull',
+     cue:'Sit down, grab the bar wide, pull it down to your chest, let it go back up slow.',muscles:['Lats','Biceps']},
+    {id:'mon2',name:'Pull-Ups',sets:4,reps:'max',rest:'90s',weight:'Bodyweight',pattern:'pull',
+     cue:'Hang from the bar, pull your chin above it, lower back down slow.',muscles:['Lats','Biceps']},
+    {id:'mon3',name:'Single-Arm Dumbbell Row',sets:3,reps:'10-12/side',rest:'75s',weight:'18-22 kg',pattern:'row',
+     cue:'Knee on a bench, pull the dumbbell up to your hip, lower it slow.',muscles:['Lats','Rear Delts']},
+    {id:'mon4',name:'Straight-Arm Pulldown',sets:3,reps:'12-15',rest:'60s',weight:'15-20 kg',pattern:'pull',
+     cue:'Keep arms straight, push the bar down to your thighs using your back, not your arms.',muscles:['Lats']},
+    {id:'mon5',name:'Face Pulls',sets:3,reps:'15',rest:'60s',weight:'10-15 kg',pattern:'raise',
+     cue:'Pull the rope to your face, elbows high, squeeze your shoulder blades together.',muscles:['Rear Delts','Traps']},
+    {id:'mon6',name:'Standing Stomach Vacuum',sets:3,reps:'15-20s hold',rest:'30s',weight:'Bodyweight',pattern:'core',
+     cue:'Blow all your air out, then suck your belly in hard like it touches your spine. Hold it.',muscles:['Deep Abs']},
+  ]},
+  { name:'Tuesday', title:'Shoulders + Core', type:'train', exercises:[
+    {id:'tue1',name:'Seated Dumbbell Overhead Press',sets:4,reps:'8-10',rest:'90s',weight:'16-20 kg ea',pattern:'push',
+     cue:'Sit tall, push both dumbbells straight up over your head, lower to shoulder height.',muscles:['Shoulders','Triceps']},
+    {id:'tue2',name:'Dumbbell Lateral Raise',sets:4,reps:'12-15',rest:'60s',weight:'6-8 kg ea',pattern:'raise',
+     cue:'Arms slightly bent, lift dumbbells out to the side to shoulder height, lower slow.',muscles:['Side Delts']},
+    {id:'tue3',name:'Cable Lateral Raise',sets:3,reps:'15',rest:'60s',weight:'5-7 kg',pattern:'raise',
+     cue:'Same move as the dumbbell raise, but the cable keeps tension the whole way.',muscles:['Side Delts']},
+    {id:'tue4',name:'Rear Delt Cable Fly',sets:3,reps:'15',rest:'60s',weight:'5-7 kg',pattern:'fly',
+     cue:'Cross the cables in front, pull your arms out wide like opening curtains.',muscles:['Rear Delts']},
+    {id:'tue5',name:'Plank',sets:3,reps:'45-60s',rest:'45s',weight:'Bodyweight',pattern:'core',
+     cue:'Hold your body straight like a plank of wood, resting on forearms and toes.',muscles:['Abs']},
+    {id:'tue6',name:'Hanging Leg Raise',sets:3,reps:'12-15',rest:'60s',weight:'Bodyweight',pattern:'core',
+     cue:'Hang from the bar, lift your legs up straight in front of you, lower slow.',muscles:['Lower Abs']},
+    {id:'tue7',name:'Side Plank',sets:3,reps:'30s/side',rest:'30s',weight:'Bodyweight',pattern:'core',
+     cue:'Lie on your side, prop up on one forearm, lift your hips into a straight line.',muscles:['Obliques']},
+  ]},
+  { name:'Wednesday', title:'Legs', type:'train', exercises:[
+    {id:'wed1',name:'Barbell Back Squat',sets:4,reps:'8-10',rest:'2 min',weight:'40-50 kg',pattern:'squat',
+     cue:'Bar on your back, sit down like sitting in a chair, stand back up.',muscles:['Quads','Glutes']},
+    {id:'wed2',name:'Romanian Deadlift',sets:3,reps:'10',rest:'90s',weight:'40-50 kg',pattern:'hinge',
+     cue:'Bar in front of your thighs, push your hips back, lower the bar down your legs, stand back up.',muscles:['Hamstrings','Glutes']},
+    {id:'wed3',name:'Leg Press',sets:3,reps:'12',rest:'90s',weight:'60-80 kg',pattern:'squat',
+     cue:'Sit in the machine, push the platform away with your feet, let it come back slow.',muscles:['Quads','Glutes']},
+    {id:'wed4',name:'Walking Lunges',sets:3,reps:'12/leg',rest:'60s',weight:'10-12 kg ea',pattern:'squat',
+     cue:'Step forward, drop your back knee toward the floor, push up and step through.',muscles:['Quads','Glutes']},
+    {id:'wed5',name:'Standing Calf Raise',sets:4,reps:'15',rest:'45s',weight:'BW +15-20 kg',pattern:'calf',
+     cue:'Rise up onto your toes as high as you can, lower back down slow.',muscles:['Calves']},
+  ]},
+  { name:'Thursday', title:'Holland Park &mdash; Active Recovery', type:'train', exercises:[
+    {id:'thu1',name:'Pull-Ups',sets:4,reps:'max',rest:'90s',weight:'Bodyweight',pattern:'pull',
+     cue:'Hang from the bar, pull your chin above it, lower back down slow.',muscles:['Lats','Biceps']},
+    {id:'thu2',name:'Parallel Bar Dips',sets:3,reps:'10-12',rest:'90s',weight:'Bodyweight',pattern:'dip',
+     cue:'Hold yourself up on the bars, lower your body until elbows bend 90 degrees, push back up.',muscles:['Chest','Triceps']},
+    {id:'thu3',name:'Hanging Leg Raise',sets:3,reps:'12-15',rest:'60s',weight:'Bodyweight',pattern:'core',
+     cue:'Hang from the bar, lift your legs up straight in front of you, lower slow.',muscles:['Lower Abs']},
+    {id:'thu4',name:'Incline Push-Ups',sets:3,reps:'15',rest:'60s',weight:'Bodyweight',pattern:'push',
+     cue:'Hands on a bench or rail, lower your chest to it, push back up.',muscles:['Chest','Triceps']},
+    {id:'thu5',name:'Plank',sets:3,reps:'45-60s',rest:'45s',weight:'Bodyweight',pattern:'core',
+     cue:'Hold your body straight like a plank of wood, resting on forearms and toes.',muscles:['Abs']},
+  ]},
+  { name:'Friday', title:'Back Thickness + Biceps', type:'train', exercises:[
+    {id:'fri1',name:'Barbell / T-Bar Row',sets:4,reps:'10',rest:'90s',weight:'30-40 kg',pattern:'row',
+     cue:'Bend forward, pull the bar up to your stomach, lower it slow.',muscles:['Lats','Biceps']},
+    {id:'fri2',name:'Seated Cable Row',sets:3,reps:'12',rest:'75s',weight:'35-45 kg',pattern:'row',
+     cue:'Sit tall, pull the handle to your stomach, squeeze your back, return slow.',muscles:['Lats','Biceps']},
+    {id:'fri3',name:'Chest-Supported Row',sets:3,reps:'12',rest:'75s',weight:'20-24 kg ea',pattern:'row',
+     cue:'Chest on the pad, pull the dumbbells up to your sides, lower slow.',muscles:['Lats','Biceps']},
+    {id:'fri4',name:'Barbell Curl',sets:3,reps:'10-12',rest:'60s',weight:'15-20 kg',pattern:'curl',
+     cue:'Arms at your sides, curl the bar up to your shoulders, lower slow.',muscles:['Biceps']},
+    {id:'fri5',name:'Incline Dumbbell Curl',sets:3,reps:'12',rest:'60s',weight:'8-10 kg ea',pattern:'curl',
+     cue:'Sit back on an incline bench, curl the dumbbells up, lower slow.',muscles:['Biceps']},
+  ]},
+  { name:'Saturday', title:'Chest + Triceps + Core', type:'train', exercises:[
+    {id:'sat1',name:'Flat Dumbbell Bench Press',sets:4,reps:'8-10',rest:'90s',weight:'20-24 kg ea',pattern:'push',
+     cue:'Lie flat, push the dumbbells straight up over your chest, lower slow.',muscles:['Chest','Triceps']},
+    {id:'sat2',name:'Incline Dumbbell Press',sets:3,reps:'10',rest:'90s',weight:'16-20 kg ea',pattern:'push',
+     cue:'Same as bench press, but on an incline bench to hit upper chest more.',muscles:['Upper Chest','Shoulders']},
+    {id:'sat3',name:'Cable Chest Fly',sets:3,reps:'12-15',rest:'60s',weight:'10-12 kg',pattern:'fly',
+     cue:'Arms wide, bring the handles together in front of your chest like a hug.',muscles:['Chest']},
+    {id:'sat4',name:'Tricep Rope Pushdown',sets:3,reps:'12-15',rest:'60s',weight:'15-20 kg',pattern:'pushdown',
+     cue:'Elbows locked at your sides, push the rope down until your arms are straight.',muscles:['Triceps']},
+    {id:'sat5',name:'Overhead Tricep Extension',sets:3,reps:'12',rest:'60s',weight:'12-15 kg',pattern:'pushdown',
+     cue:'Hold the weight behind your head, straighten your arms up, lower slow.',muscles:['Triceps']},
+    {id:'sat6',name:'Standing Stomach Vacuum',sets:3,reps:'15-20s hold',rest:'30s',weight:'Bodyweight',pattern:'core',
+     cue:'Blow all your air out, then suck your belly in hard like it touches your spine. Hold it.',muscles:['Deep Abs']},
+  ]},
+];
+
+const EX_IMAGES = {
+  fri1: 'images/fri1.jpg',
+  fri2: 'images/fri2.jpg',
+  fri3: 'images/fri3.jpg',
+  fri4: 'images/fri4.jpg',
+  fri5: 'images/fri5.jpg',
+  mon1: 'images/mon1.jpg',
+  mon2: 'images/mon2.jpg',
+  mon3: 'images/mon3.jpg',
+  mon4: 'images/mon4.jpg',
+  mon5: 'images/mon5.jpg',
+  mon6: 'images/mon6.jpg',
+  sat1: 'images/sat1.jpg',
+  sat2: 'images/sat2.jpg',
+  sat3: 'images/sat3.jpg',
+  sat4: 'images/sat4.jpg',
+  sat5: 'images/sat5.jpg',
+  sat6: 'images/sat6.jpg',
+  thu1: 'images/thu1.jpg',
+  thu2: 'images/thu2.jpg',
+  thu3: 'images/thu3.jpg',
+  thu4: 'images/thu4.jpg',
+  thu5: 'images/thu5.jpg',
+  tue1: 'images/tue1.jpg',
+  tue2: 'images/tue2.jpg',
+  tue3: 'images/tue3.jpg',
+  tue4: 'images/tue4.jpg',
+  tue5: 'images/tue5.jpg',
+  tue6: 'images/tue6.jpg',
+  tue7: 'images/tue7.jpg',
+  wed1: 'images/wed1.jpg',
+  wed2: 'images/wed2.jpg',
+  wed3: 'images/wed3.jpg',
+  wed4: 'images/wed4.jpg',
+  wed5: 'images/wed5.jpg'
+};
+
+function youtubeSearchUrl(name){
+  const q = encodeURIComponent(name + ' exercise form tutorial');
+  return `https://www.youtube.com/results?search_query=${q}`;
+}
+
+/* ---------- State ---------- */
+let viewedDate = new Date();
+let calMonthDate = new Date();
+const pad = n => String(n).padStart(2,'0');
+const dateKeyOf = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const monthKeyOf = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+const sameDay = (a,b) => dateKeyOf(a)===dateKeyOf(b);
+
+async function getMonthData(ym){
+  const raw = await storeGet('month:'+ym);
+  return raw ? JSON.parse(raw) : {};
+}
+async function setMonthData(ym,data){
+  await storeSet('month:'+ym, JSON.stringify(data));
+}
+
+function showTab(which){
+  document.getElementById('tabToday').style.display = which==='today' ? '' : 'none';
+  document.getElementById('tabFuel').style.display = which==='fuel' ? '' : 'none';
+  document.getElementById('tabProgress').style.display = which==='progress' ? '' : 'none';
+  document.getElementById('tabPhone').style.display = which==='phone' ? '' : 'none';
+  document.getElementById('tabTodayBtn').classList.toggle('active', which==='today');
+  document.getElementById('tabFuelBtn').classList.toggle('active', which==='fuel');
+  document.getElementById('tabProgressBtn').classList.toggle('active', which==='progress');
+  document.getElementById('tabPhoneBtn').classList.toggle('active', which==='phone');
+  if(which==='progress') renderCalendar();
+  if(which==='fuel') renderWater();
+}
+
+const WATER_GLASSES = 8;
+const WATER_ML = 400;
+
+async function getWaterCount(){
+  const key = 'water:'+dateKeyOf(new Date());
+  const raw = await storeGet(key);
+  const n = raw ? parseInt(raw,10) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+async function setWaterCount(n){
+  await storeSet('water:'+dateKeyOf(new Date()), String(n));
+}
+async function renderWater(){
+  const n = await getWaterCount();
+  const wrap = document.getElementById('waterWrap');
+  wrap.innerHTML = '';
+  for(let i=1;i<=WATER_GLASSES;i++){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'glass' + (i<=n ? ' on' : '');
+    b.title = i+' × 400 ml';
+    b.onclick = ()=>toggleWater(i);
+    wrap.appendChild(b);
+  }
+  const litres = (n*WATER_ML/1000).toFixed(1);
+  document.getElementById('waterMeta').innerHTML = `<b>${litres} L</b> / 3.2 L · ${n} of ${WATER_GLASSES} glasses`;
+}
+async function toggleWater(i){
+  const current = await getWaterCount();
+  const next = current===i ? i-1 : i;
+  await setWaterCount(next);
+  renderWater();
+}
+
+async function renderToday(){
+  const plan = WEEK[viewedDate.getDay()];
+  const isToday = sameDay(viewedDate, new Date());
+  document.getElementById('dowLabel').innerHTML = plan.name + (isToday ? ' <span class="today-pill">TODAY</span>' : '');
+  document.getElementById('dateLabel').textContent = viewedDate.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('dayPlanTitle').innerHTML = plan.title;
+
+  const ym = monthKeyOf(viewedDate);
+  const dd = String(viewedDate.getDate());
+  const monthData = await getMonthData(ym);
+  const checked = new Set(monthData[dd] || []);
+
+  const list = document.getElementById('exerciseList');
+  list.innerHTML = '';
+
+  if(plan.type==='rest'){
+    document.getElementById('dayCount').textContent = '';
+    document.getElementById('progressBar').style.width = '0%';
+    list.innerHTML = `<div class="rest-card"><h3>Rest Day</h3>Recovery is where the muscle you built this week actually grows. Sleep, protein, and hydration only.</div>`;
+    return;
+  }
+
+  document.getElementById('dayCount').textContent = `${checked.size} / ${plan.exercises.length} done`;
+  const pct = plan.exercises.length ? Math.round((checked.size/plan.exercises.length)*100) : 0;
+  document.getElementById('progressBar').style.width = pct+'%';
+
+  plan.exercises.forEach(ex=>{
+    const isDone = checked.has(ex.id);
+    const card = document.createElement('div');
+    card.className = 'ex-card' + (isDone ? ' done' : '');
+    card.innerHTML = `
+      <div class="ex-top">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-check">
+          <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleExercise('${ex.id}', this.checked)">
+        </div>
+      </div>
+      ${EX_IMAGES[ex.id] ? `<div class="ex-diagram"><img src="${EX_IMAGES[ex.id]}" alt="${ex.name} diagram" loading="lazy"></div>` : ''}
+      <div class="cue-text">${ex.cue}</div>
+      <div class="muscle-row">${ex.muscles.map(m=>`<span class="muscle-chip">${m}</span>`).join('')}</div>
+      <div class="ex-meta">
+        <span>${ex.sets} x ${ex.reps}</span>
+        <span>Rest ${ex.rest}</span>
+        <span>${ex.weight}</span>
+      </div>
+      <a class="watch-btn" href="${youtubeSearchUrl(ex.name)}" target="_blank" rel="noopener">Watch real video demo &rarr;</a>`;
+    list.appendChild(card);
+  });
+}
+
+async function toggleExercise(id, isChecked){
+  const ym = monthKeyOf(viewedDate);
+  const dd = String(viewedDate.getDate());
+  const monthData = await getMonthData(ym);
+  const set = new Set(monthData[dd] || []);
+  if(isChecked) set.add(id); else set.delete(id);
+  monthData[dd] = Array.from(set);
+  await setMonthData(ym, monthData);
+  renderToday();
+}
+
+function shiftDay(delta){
+  viewedDate.setDate(viewedDate.getDate()+delta);
+  renderToday();
+}
+
+async function renderCalendar(){
+  const year = calMonthDate.getFullYear();
+  const month = calMonthDate.getMonth();
+  document.getElementById('monthLabel').textContent = calMonthDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+
+  const ym = `${year}-${pad(month+1)}`;
+  const monthData = await getMonthData(ym);
+
+  const dowRow = document.getElementById('calDow');
+  dowRow.innerHTML = ['S','M','T','W','T','F','S'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML='';
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = new Date();
+
+  for(let i=0;i<firstDow;i++){
+    const c = document.createElement('div'); c.className='cal-cell empty'; grid.appendChild(c);
+  }
+
+  let fullDayCount = 0;
+
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(year, month, day);
+    const plan = WEEK[d.getDay()];
+    const doneArr = monthData[String(day)] || [];
+    const total = plan.exercises.length;
+    const isPast = d < new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const isTodayCell = sameDay(d, today);
+
+    let cls = 'cal-cell';
+    if(plan.type==='rest'){
+      cls += ' rest';
+    } else if(total>0 && doneArr.length>=total){
+      cls += ' complete'; fullDayCount++;
+    } else if(doneArr.length>0){
+      cls += ' partial';
+    } else if(isPast){
+      cls += ' missed';
+    }
+    if(isTodayCell) cls += ' today-cell';
+
+    const c = document.createElement('div');
+    c.className = cls;
+    c.textContent = day;
+    c.title = `${plan.name}: ${doneArr.length}/${total||0}`;
+    grid.appendChild(c);
+  }
+
+  document.getElementById('monthCompleteNum').textContent = fullDayCount;
+  document.getElementById('streakNum').textContent = await computeStreak();
+}
+
+async function computeStreak(){
+  let streak = 0;
+  let cursor = new Date();
+  const cache = {};
+  while(true){
+    const ym = monthKeyOf(cursor);
+    if(!cache[ym]) cache[ym] = await getMonthData(ym);
+    const plan = WEEK[cursor.getDay()];
+    const doneArr = cache[ym][String(cursor.getDate())] || [];
+    const total = plan.exercises.length;
+
+    if(plan.type==='rest'){
+      cursor.setDate(cursor.getDate()-1);
+      continue;
+    }
+    if(total>0 && doneArr.length>=total){
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    } else {
+      break;
+    }
+    if(streak>365) break;
+  }
+  return streak;
+}
+
+function shiftMonth(delta){
+  calMonthDate.setMonth(calMonthDate.getMonth()+delta);
+  renderCalendar();
+}
+
+renderToday();
+</script>
+</body>
+</html>
