@@ -445,9 +445,9 @@
   .ex-anim-window img{
     position:absolute;top:0;left:0;height:100%;width:200%;max-width:none;max-height:none;
     object-fit:cover;object-position:left center;
-    animation:exStartFinish 2.6s ease-in-out infinite alternate;
+    animation:none;/*exStartFinish 2.6s ease-in-out infinite alternate;
   }
-  @keyframes exStartFinish{
+  @keyframes exStartFinishDisabled{
     0%{transform:translateX(0);}
     100%{transform:translateX(-50%);}
   }
@@ -2085,11 +2085,7 @@ function homeHowTo(ex){
 function diagramHtml(ex){
   const src = photoFitsMove(ex) ? exImg(ex) : '';
   if(src){
-    return `<div class="ex-anim">
-      <div class="ex-anim-window"><img src="${src}" alt="${ex.name} start to finish"></div>
-      <div class="ex-anim-bar"><span class="on">START</span><span>FINISH</span></div>
-      <div class="cue-text" style="margin:8px 0 0">Still frames of <b>${ex.name}</b>. Use the video for timing and full motion.</div>
-    </div>`;
+    return `<div class="ex-diagram"><img src="${src}" alt="${ex.name}"></div>`;
   }
   if(isHomeMove(ex)){
     const h = homeHowTo(ex);
