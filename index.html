@@ -482,7 +482,7 @@
   .bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px;}
   @media(min-width:560px){.bank-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
   .bank-card{background:#0E0E12;border:1px solid var(--card-border);border-radius:12px;padding:8px;cursor:pointer;text-align:left;}
-  .bank-card img{width:100%;height:88px;object-fit:cover;border-radius:8px;background:#fff;display:block;margin-bottom:6px;}
+  .bank-card img{width:100%;height:110px;object-fit:cover;border-radius:8px;background:#fff;display:block;margin-bottom:6px;}
   .bank-card .nm{font-size:12px;font-weight:700;color:var(--text);line-height:1.3;}
   .bank-card .mg{font-size:10px;color:var(--accent);margin-top:2px;}
   .bank-card .home-tag{font-size:10px;color:#9fdfb0;}
@@ -693,7 +693,8 @@
       <label class="label">Day to edit</label>
       <select id="builderDay" onchange="renderBuilder()" style="width:100%;margin:6px 0 10px;background:#0E0E12;color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:10px;font:inherit"></select>
       <div id="builderList"></div>
-      <label class="label">Muscle to train</label>
+      <label class="label">Muscle to train — tap a card with its picture</label>
+      <p class="prog-meta" style="margin:4px 0 8px">113 moves with start / finish stills. Home kit is marked. Gym and sculpting work sit in the same list.</p>
       <div class="level-row" id="muscleGroupRow" style="margin:8px 0 10px"></div>
       <div id="bankGrid" class="bank-grid"></div>
       <label class="label">Or type an exercise name</label>
@@ -804,6 +805,8 @@
 <script src="img-6.js"></script>
 <script src="img-extra.js"></script>
 <script src="img-women.js"></script>
+<script src="img-bank.js"></script>
+<script src="img-master.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -1392,7 +1395,7 @@ let PROGRAMS = [
     best:'Calisthenics, playground bar, or a solid vertical pole at home. No barbell.',
     week:[
       { title:'Hang + grip', type:'train', exercises:[
-        E('mon2','Dead hang on a bar or pole',4,'20-40s','60s','Bodyweight','Hands stacked or close. Shoulders packed. Breathe. This is the flag grip.',['Lats','Grip']),
+        E('m_deadhang','Dead hang on a bar or pole',4,'20-40s','60s','Bodyweight','Hands stacked or close. Shoulders packed. Breathe. This is the flag grip.',['Lats','Grip']),
         E('mon3','Vertical pole hug / climb hold',3,'20s','60s','Bodyweight','Hug a pole or doorframe edge. Pull the body into the post.',['Lats','Core']),
         E('tue7','Side Plank',4,'25s/side','30s','Bodyweight','The flag is a side plank in the air. Keep a long line.',['Obliques']),
         E('mon6','Standing Stomach Vacuum',3,'20s hold','20s','Bodyweight','Brace the waist before every hang.',['Deep Abs']),
@@ -1401,19 +1404,19 @@ let PROGRAMS = [
       { title:'Tuck flag', type:'train', exercises:[
         E('tue7','Side plank + clam',3,'10/side','45s','Bodyweight','Open the top hip. Same pattern as kicking into a tuck flag.',['Obliques','Glutes']),
         E('tue6','Hanging Leg Raise',3,'8-12','75s','Bar','Raise knees toward the high hand side.',['Abs','Hip Flexors']),
-        E('mon2','Tuck flag attempt',6,'5-12s','90s','Pole / bar','Bottom hand pushes, top hand pulls. Knees tucked. Short holds beat sloppy long ones.',['Obliques','Lats','Shoulders']),
+        E('bank_flag','Tuck flag attempt',6,'5-12s','90s','Pole / bar','Bottom hand pushes, top hand pulls. Knees tucked. Short holds beat sloppy long ones.',['Obliques','Lats','Shoulders']),
         E('thu4','Incline Push-Ups',3,'10-15','60s','Home','Press strength for the bottom arm.',['Chest','Triceps']),
       ]},
       restDay,
       { title:'Straddle toward full flag', type:'train', exercises:[
-        E('mon2','Straddle flag attempt',6,'3-10s','90s','Pole / bar','Legs open to shorten the lever. Push + pull at the same time.',['Obliques','Lats']),
+        E('m_straddle_flag','Straddle flag attempt',6,'3-10s','90s','Pole / bar','Legs open to shorten the lever. Push + pull at the same time.',['Obliques','Lats']),
         E('wed4','Walking Lunges',3,'10/leg','60s','Bodyweight','Strong legs help the kick-up.',['Quads','Glutes']),
         E('tue5','Plank',3,'40s','30s','Bodyweight','Total body line.',['Abs']),
         E('tue1','Pike / Kneeling Press substitute',3,'8-10','60s','Wall / floor','Top-arm press pattern.',['Shoulders']),
       ]},
       restDay,
       { title:'Skill play', type:'train', exercises:[
-        E('mon2','Flag entries only',8,'3s','60s','Pole / bar','Kick up, find the line, come down. Quality over hold time.',['Obliques','Lats']),
+        E('m_full_flag','Flag entries only',8,'3s','60s','Pole / bar','Kick up, find the line, come down. Quality over hold time.',['Obliques','Lats']),
         E('tue7','Side Plank',3,'30s/side','30s','Bodyweight','Slow side support.',['Obliques']),
         E('mon6','Standing Stomach Vacuum',3,'20s hold','20s','Bodyweight','Keep the waist tight on every entry.',['Deep Abs']),
       ]},
@@ -1535,6 +1538,7 @@ const MUSCLE_GROUPS = [
   {id:'hams', label:'Hamstrings'},
   {id:'glutes', label:'Glutes'},
   {id:'calves', label:'Calves'},
+  {id:'full', label:'Full body'},
   {id:'skill', label:'Skill / Flag'}
 ];
 let activeMuscleGroup = 'all';
@@ -1542,59 +1546,131 @@ function B(group, img, name, muscles, cue, home){
   return { group, img, name, muscles, cue, home:!!home, sets:3, reps:'10-12', rest:'60s', weight: home?'Home kit':'Moderate' };
 }
 const EXERCISE_BANK = [
+  /* Chest */
+  B('chest','bank_bb_bench','Flat Barbell Bench Press',['Chest','Triceps'],'Wrists stacked, bar to mid-chest, press up.'),
   B('chest','sat1','Flat Dumbbell Bench Press',['Chest','Triceps'],'Wrists stacked, lower to mid-chest, press up.'),
   B('chest','sat2','Incline Dumbbell Press',['Upper Chest','Shoulders'],'Bench 30°. Press toward the ceiling.'),
+  B('chest','bank_decline','Decline Press',['Lower Chest','Triceps'],'Slight decline. Lower to the lower chest, press up.'),
   B('chest','sat3','Cable Chest Fly',['Chest'],'Soft elbows, hug a tree, squeeze.'),
-  B('chest','thu4','Incline Push-Ups (home)',['Chest','Triceps'],'Hands on sofa or wall. Body straight.', true),
-  B('chest','thu4','Knee Push-Ups (home)',['Chest','Triceps'],'Knees down, same line from head to hips.', true),
-  B('chest','thu2','Chair Dips (home)',['Triceps','Chest'],'Hands on a sturdy chair behind you.', true),
-  B('back','mon1','Wide-Grip Lat Pulldown',['Lats','Back'],'Pull the bar to the chest, not behind the neck.'),
+  B('chest','bank_pecdeck','Pec Deck Machine',['Chest'],'Elbows slightly bent. Bring pads together and squeeze.'),
+  B('chest','bank_pushup','Standard Floor Push-Ups',['Chest','Triceps'],'Body in one line. Chest nearly to the floor, then press.', true),
+  B('chest','m_incline_push','Incline Push-Ups (home)',['Chest','Triceps'],'Hands on sofa or bench. Body straight.', true),
+  B('chest','m_knee_push','Knee Push-Ups (home)',['Chest','Triceps'],'Knees down, same line from head to hips.', true),
+  B('chest','m_wall_push','Wall Push-Up (home)',['Chest','Triceps'],'Hands on the wall, walk the feet back.', true),
+  B('chest','bank_chaturanga','Chaturanga / Pilates Push-Ups',['Chest','Triceps','Core'],'Elbows hug the ribs. Lower as one piece.', true),
+  /* Back */
+  B('back','bank_deadlift','Traditional Deadlifts',['Back','Glutes','Hams'],'Bar close. Push the floor away, stand tall.'),
   B('back','mon2','Pull-Ups',['Lats','Biceps'],'Chest to bar, lower slow.'),
-  B('back','mon3','Single-Arm Dumbbell Row',['Lats','Back'],'Elbow to hip. Do not twist.'),
+  B('back','mon1','Wide-Grip Lat Pulldown',['Lats','Back'],'Pull the bar to the chest, not behind the neck.'),
   B('back','fri1','Barbell / T-Bar Row',['Back','Lats'],'Hinge, row to the belly.'),
+  B('back','mon3','Single-Arm Dumbbell Row',['Lats','Back'],'Elbow to hip. Do not twist.'),
   B('back','fri2','Seated Cable Row',['Back','Biceps'],'Squeeze shoulder blades, sit tall.'),
   B('back','fri3','Chest-Supported Row',['Back'],'Chest on the pad so the lower back rests.'),
-  B('back','mon2','Door-row / table row (home)',['Lats','Back'],'Row under a table or with a towel in a door.', true),
   B('back','mon4','Straight-Arm Pulldown',['Lats'],'Arms long, push the bar to the hips.'),
-  B('back','mon5','Face Pulls',['Rear Delts','Upper Back'],'Pull to the face, elbows high.'),
+  B('back','m_door_row','Door-Row / Table Row (home)',['Lats','Back'],'Row under a table or with a towel in a door.', true),
+  B('back','m_bag_row','Backpack Row (home)',['Back'],'Hinge and row a loaded bag.', true),
+  /* Shoulders */
+  B('shoulders','bank_military','Overhead Military Press (Standing Barbell)',['Shoulders','Triceps'],'Brace the waist. Press up, do not lean back.'),
   B('shoulders','tue1','Seated Dumbbell Overhead Press',['Shoulders','Triceps'],'Press up, do not flare the ribs.'),
+  B('shoulders','bank_arnold','Arnold Press',['Shoulders'],'Start palms in, rotate out as you press.'),
   B('shoulders','tue2','Dumbbell Lateral Raise',['Side Delts'],'Lead with elbows, stop at shoulder height.'),
   B('shoulders','tue3','Cable Lateral Raise',['Side Delts'],'Same path as the dumbbell raise.'),
+  B('shoulders','bank_front_raise','Front Raises',['Front Delts'],'Raise to eye height. No swing.'),
+  B('shoulders','bank_upright','Upright Rows',['Side Delts','Traps'],'Bar close, elbows higher than the wrists.'),
+  B('shoulders','mon5','Face Pulls',['Rear Delts','Upper Back'],'Pull to the face, elbows high.'),
   B('shoulders','tue4','Rear Delt Cable Fly',['Rear Delts'],'Open the arms like a reverse hug.'),
-  B('shoulders','tue2','Bottle lateral raise (home)',['Side Delts'],'Water bottles. Same path.', true),
-  B('shoulders','tue1','Pike / wall press (home)',['Shoulders'],'Hips high or kneeling at a wall.', true),
+  B('shoulders','bank_pullapart','Resistance Band Pull-Aparts',['Rear Delts','Upper Back'],'Arms long, pull the band to the chest.', true),
+  B('shoulders','m_bottle_raise','Bottle Lateral Raise (home)',['Side Delts'],'Water bottles. Same path as a dumbbell raise.', true),
+  B('shoulders','m_pike_press','Pike / Wall Press (home)',['Shoulders'],'Hips high or kneeling at a wall.', true),
+  /* Biceps */
   B('biceps','fri4','Barbell Curl',['Biceps'],'Elbows pinned. No swing.'),
   B('biceps','fri5','Incline Dumbbell Curl',['Biceps'],'On an incline so the stretch is long.'),
-  B('biceps','fri4','Bag or bottle curl (home)',['Biceps'],'A backpack or bottles. Slow down.', true),
-  B('biceps','mon2','Chin-Up',['Biceps','Lats'],'Palms toward you. Chest to bar.'),
+  B('biceps','bank_hammer','Dumbbell Hammer Curls',['Biceps','Forearms'],'Thumbs up. Elbows still.'),
+  B('biceps','bank_preacher','EZ Bar Preacher Curls',['Biceps'],'Armpit on the pad. Full stretch, no bounce.'),
+  B('biceps','m_cable_curl','Cable Curls',['Biceps'],'Stand still. Curl the handle to the shoulder.'),
+  B('biceps','bank_concentration','Concentration Curls',['Biceps'],'Elbow inside the thigh. Squeeze at the top.'),
+  B('biceps','m_chinup','Chin-Up',['Biceps','Lats'],'Palms toward you. Chest to bar.'),
+  B('biceps','m_bottle_curl','Bag or Bottle Curl (home)',['Biceps'],'A backpack or bottles. Slow down.', true),
+  /* Triceps */
+  B('triceps','m_cg_bench','Close-Grip Bench Press',['Triceps','Chest'],'Hands just inside shoulder width. Elbows in.'),
+  B('triceps','bank_skull','Skullcrushers (Lying Tricep Extensions)',['Triceps'],'Only the elbows move. Lower toward the forehead.'),
   B('triceps','sat4','Tricep Rope Pushdown',['Triceps'],'Elbows glued to the ribs, open the rope at the bottom.'),
+  B('triceps','bank_kickback','Dumbbell Tricep Kickbacks',['Triceps'],'Upper arm locked. Extend until the arm is long.'),
   B('triceps','thu2','Parallel Bar Dips',['Triceps','Chest'],'Slight lean, lock out without shrugging.'),
-  B('triceps','sat4','Chair overhead extension (home)',['Triceps'],'One bottle behind the head, extend.', true),
+  B('triceps','m_chair_dip','Chair Dips (home)',['Triceps','Chest'],'Hands on a sturdy chair behind you.', true),
+  B('triceps','m_chair_oh','Chair Overhead Extension (home)',['Triceps'],'One bottle behind the head, extend.', true),
+  /* Quads */
+  B('quads','wed1','Barbell Back Squat',['Quads','Glutes'],'Sit between the heels, chest up.'),
+  B('quads','bank_front_squat','Front Squats',['Quads','Core'],'Elbows high. Sit between the heels.'),
+  B('quads','m_hack','Hack Squats',['Quads'],'Back on the pad. Drive through the heels.'),
+  B('quads','wed3','Leg Press',['Quads','Glutes'],'Do not lock the knees hard.'),
+  B('quads','bank_bulgarian','Bulgarian Split Squats',['Quads','Glutes'],'Back foot on a bench. Front heel stays down.'),
+  B('quads','bank_sumo','Sumo Squats / Plié Squats',['Quads','Adductors','Glutes'],'Wide stance, toes out, knees track the toes.'),
+  B('quads','wed4','Walking Lunges',['Quads','Glutes'],'Long step, front heel down.', true),
+  B('quads','m_pulse_squat','Pulse Squats & Pulse Lunges',['Quads','Glutes'],'Stay in the bottom third and pulse.', true),
+  B('quads','bank_legext','Leg Extensions',['Quads'],'Lift to a soft lock, squeeze, lower slow.'),
+  B('quads','m_adductor','Cable Inner Thigh Pulls (Adductors)',['Adductors'],'Stand tall. Sweep the working leg across.'),
+  B('quads','w_squat','Goblet Squat',['Quads','Glutes'],'Hold a bag or DB at the chest.', true),
+  B('quads','m_stepup','Step-Up on a Chair (home)',['Quads','Glutes'],'Whole foot on the chair, drive the heel.', true),
+  B('quads','m_chair_squat','Chair Squat (home)',['Quads','Glutes'],'Sit to a chair, stand without hands.', true),
+  /* Hamstrings */
+  B('hams','wed2','Romanian Deadlift (RDL)',['Hamstrings','Glutes'],'Hips back, bar close to the legs.'),
+  B('hams','m_stiff_dl','Stiff-Leg Deadlifts',['Hamstrings'],'Softer knee bend than an RDL. Feel the stretch.'),
+  B('hams','bank_legcurl','Seated Leg Curls',['Hamstrings'],'Curl the pad under the seat. Control the return.'),
+  B('hams','m_lying_curl','Lying Leg Curls',['Hamstrings'],'Hips stay on the pad. Curl toward the glutes.'),
+  B('hams','m_ghr','Glute-Ham Raises',['Hamstrings','Glutes'],'Lower with control, then curl back up.'),
+  B('hams','m_goodmorning','Hip Hinge Good-Morning (home)',['Hamstrings'],'Hands at temples, hips back.', true),
+  /* Glutes */
+  B('glutes','w_hip','Barbell Hip Thrust / Sofa Bridge',['Glutes'],'Shoulders on bench or sofa, drive hips up.', true),
+  B('glutes','m_sumo_dl','Sumo Deadlifts',['Glutes','Adductors','Back'],'Wide stance. Push the floor away.'),
+  B('glutes','bank_bulgarian','Glute-Biased Bulgarian Split Squats',['Glutes','Quads'],'Longer step. Lean slightly into the front hip.'),
+  B('glutes','m_pullthrough','Cable Pull-Throughs',['Glutes','Hams'],'Hinge, then snap the hips through.'),
+  B('glutes','m_curtsy','Curtsy Lunges',['Glutes','Outer Thigh'],'Step the back foot behind and across.', true),
+  B('glutes','w_lunge','Reverse Lunge',['Glutes','Quads'],'Step back, front heel stays down.', true),
+  B('glutes','m_hip_abd','Standing Hip Abductions / Cable Hip Abductions',['Glutes','Abductors'],'Stand tall. Lift the working leg out to the side.'),
+  B('glutes','bank_donkey','Donkey Kicks (bodyweight/band/cable)',['Glutes'],'Hands and knees. Heel to the ceiling.', true),
+  B('glutes','bank_hydrant','Fire Hydrants (bodyweight/band)',['Glutes','Abductors'],'Hands and knees. Open the top knee.', true),
+  B('glutes','m_kickback','Glute Kickback (floor/machine)',['Glutes'],'Heel to the ceiling, hips square.', true),
+  B('glutes','bank_clam','Clamshells',['Glutes','Abductors'],'Side-lying, knees bent. Open the top knee.', true),
+  B('glutes','m_band_walk','Lateral Band Walks / Monster Walks',['Glutes','Abductors'],'Band at the knees or ankles. Small steps.', true),
+  B('glutes','m_frog','Frog Pumps',['Glutes'],'Soles together, knees out. Drive hips up.', true),
+  B('glutes','m_bridge_abd','Banded Glute Bridge Abductions',['Glutes','Abductors'],'Bridge up, then open the knees against the band.', true),
+  /* Calves */
+  B('calves','m_stand_calf','Standing Calf Raise',['Calves'],'Up, pause, lower past the step.', true),
+  B('calves','m_seat_calf','Seated Machine Calf Raises',['Calves'],'Balls of feet on the platform. Full stretch.'),
+  B('calves','m_donkey_calf','Donkey Calf Raises',['Calves'],'Hinge at the hips. Rise onto the toes.'),
+  B('calves','m_press_calf','Leg Press Calf Extensions',['Calves'],'Legs long. Only the ankles move.'),
+  /* Belly */
+  B('core','bank_crunch','Crunches',['Abs'],'Ribs toward the hips. Do not yank the neck.', true),
   B('core','tue5','Plank',['Abs'],'Straight line. Do not pike or sag.', true),
   B('core','tue7','Side Plank',['Obliques'],'Hips high. Each side.', true),
+  B('core','m_plank_lift','High Plank Leg Lifts',['Abs','Glutes'],'High plank. Lift one heel without rocking.', true),
   B('core','tue6','Hanging Leg Raise',['Lower Abs','Hip Flexors'],'Pelvis curls up, not just the legs.'),
-  B('core','tue6','Lying leg raise (home)',['Lower Abs'],'Back pressed into the floor.', true),
+  B('core','m_lie_raise','Lying Leg Raise (home)',['Lower Abs'],'Back pressed into the floor.', true),
+  B('core','bank_russian','Russian Twists',['Obliques'],'Rotate the ribcage, not just the arms.', true),
+  B('core','bank_bicycle','Bicycle Crunches',['Abs','Obliques'],'Elbow to opposite knee. Slow.', true),
+  B('core','bank_abwheel','Ab Wheel Rollouts',['Abs'],'Roll out only as far as the ribs stay down.'),
+  B('core','m_woodchop','Cable Wood Chops',['Obliques'],'Rotate from the waist. Arms stay long.'),
+  B('core','m_birddog','Bird-Dog',['Abs','Back'],'Opposite arm and leg. Hips still.', true),
+  B('core','m_heeltap','Heel Taps / Toe Taps',['Obliques','Abs'],'Shoulders off the floor. Reach side to side.', true),
+  B('core','m_hundreds','Pilates Hundreds',['Abs'],'Head and shoulders up. Pump the arms.', true),
   B('core','mon6','Standing Stomach Vacuum',['Deep Abs'],'Breathe out and pull the waist in.', true),
-  B('core','tue6','Dead bug (home)',['Abs'],'Opposite arm and leg. Slow.', true),
-  B('quads','wed1','Barbell Back Squat',['Quads','Glutes'],'Sit between the heels, chest up.'),
-  B('quads','wed3','Leg Press',['Quads','Glutes'],'Do not lock the knees hard.'),
-  B('quads','wed4','Walking Lunges',['Quads','Glutes'],'Long step, front heel down.', true),
-  B('quads','wed1','Chair squat (home)',['Quads','Glutes'],'Sit to a chair, stand without hands.', true),
-  B('quads','w_squat','Goblet squat',['Quads','Glutes'],'Hold a bag or DB at the chest.'),
-  B('hams','wed2','Romanian Deadlift',['Hamstrings','Glutes'],'Hips back, bar close to the legs.'),
-  B('hams','wed2','Hip hinge good-morning (home)',['Hamstrings'],'Hands at temples, hips back.', true),
-  B('glutes','w_hip','Hip thrust or sofa bridge',['Glutes'],'Shoulders on sofa, drive hips up.', true),
-  B('glutes','w_lunge','Reverse lunge',['Glutes','Quads'],'Step back, front heel stays down.', true),
-  B('glutes','wed5','Glute kickback (floor)',['Glutes'],'Heel to the ceiling, hips square.', true),
-  B('calves','wed5','Standing Calf Raise',['Calves'],'Up, pause, lower past the step.', true),
-  B('skill','mon2','Dead hang',['Grip','Lats'],'Shoulders packed. Hold.', true),
-  B('skill','mon2','Tuck human flag',['Obliques','Lats','Shoulders'],'Bottom hand pushes, top hand pulls. Knees tucked.', true),
-  B('skill','mon2','Straddle human flag',['Obliques','Lats'],'Legs open to shorten the lever.', true),
-  B('skill','mon2','Full human flag attempt',['Obliques','Lats','Shoulders'],'Body in one line with the pole.', true),
-  B('home','thu4','Wall push-up',['Chest','Triceps'],'Hands on the wall, walk the feet back.', true),
-  B('home','tue5','Mountain-climber hold',['Abs'],'Plank, then slow knee drives.', true),
-  B('home','wed3','Step-up on a chair',['Quads','Glutes'],'Whole foot on the chair, drive the heel.', true),
-  B('home','mon3','Backpack row',['Back'],'Hinge and row a loaded bag.', true)
+  B('core','m_deadbug','Dead Bug (home)',['Abs'],'Opposite arm and leg. Slow.', true),
+  B('core','m_mtn_hold','Mountain-Climber Hold (home)',['Abs'],'Plank, then slow knee drives.', true),
+  /* Full body / cardio home */
+  B('full','m_bw_squat','Bodyweight Squats (Standard, unassisted)',['Quads','Glutes'],'Sit between the heels, stand tall.', true),
+  B('full','bank_burpee','Burpees',['Full body'],'Squat, plank, jump. Keep the core tight.', true),
+  B('full','bank_jacks','Jumping Jacks',['Full body'],'Arms and legs open together. Soft landings.', true),
+  /* Skill / flag / grip */
+  B('skill','m_hspu','Handstand Push-ups',['Shoulders','Triceps'],'Wall or freestanding. Head to a mat, then press.'),
+  B('skill','bank_muscleup','Bar Muscle-ups',['Lats','Chest','Triceps'],'Pull high, then sit over the bar.'),
+  B('skill','m_ring_mu','Ring Muscle-ups',['Lats','Chest','Triceps'],'Rings turn out at the bottom. Pull, then dip.'),
+  B('skill','m_front_lever','Front Levers',['Lats','Core'],'Body long and hollow. Pull the bar toward the hips.'),
+  B('skill','m_planche','Planche Holds',['Shoulders','Core'],'Lean forward, lock the arms, lift the feet.'),
+  B('skill','bank_flag','Tuck Human Flag (home)',['Obliques','Lats','Shoulders'],'Bottom hand pushes, top hand pulls. Knees tucked.', true),
+  B('skill','m_straddle_flag','Straddle Human Flag (home)',['Obliques','Lats'],'Legs open to shorten the lever.', true),
+  B('skill','m_full_flag','Full Human Flag Attempt (home)',['Obliques','Lats','Shoulders'],'Body in one line with the pole.', true),
+  B('skill','m_deadhang','Dead Hang (home)',['Grip','Lats'],'Shoulders packed. Hold.', true)
 ];
 function exerciseCatalog(){
   const seen = new Map();
@@ -2218,13 +2294,12 @@ function isHomeMove(ex){
   const p = currentProgram();
   if(p && p.id==='home') return true;
   const n = (ex && ex.name || '').toLowerCase();
-  return /chair|door-row|doorway|bottle|pike|knee push|sofa|table|hallway|good-morning|vacuum|lying leg|bodyweight|incline push-ups|chair squat/.test(n);
+  return /chair|door-row|doorway|bottle|pike|knee push|wall push|sofa|table|hallway|good-morning|vacuum|lying leg|bodyweight|incline push|chair squat|backpack|bag or bottle|dead hang|human flag|frog|clamshell|fire hydrant|donkey kick|band walk|dead bug|mountain-climber|bird-dog|heel tap|pilates hundred|step-up/.test(n);
 }
 function photoFitsMove(ex){
   const n = (ex && ex.name || '').toLowerCase();
   if(/stretch|fold|cat-cow|cobra|open book|child.?s pose|walk \+|easy 20/.test(n)) return false;
-  if(isHomeMove(ex)) return false;
-  return true;
+  return !!exImg(ex);
 }
 function homeHowTo(ex){
   const n = (ex && ex.name || '').toLowerCase();
@@ -2246,7 +2321,8 @@ function homeHowTo(ex){
 function diagramHtml(ex){
   const src = photoFitsMove(ex) ? exImg(ex) : '';
   if(src){
-    return `<div class="ex-diagram"><img src="${src}" alt="${ex.name}"></div>`;
+    const homeNote = isHomeMove(ex) ? `<div class="cue-text">Home kit version — chair, bottles, floor, bag or pole. No barbell required.</div>` : '';
+    return `<div class="ex-diagram"><img src="${src}" alt="${ex.name}"></div>${homeNote}`;
   }
   if(isHomeMove(ex)){
     const h = homeHowTo(ex);
