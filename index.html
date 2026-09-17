@@ -458,6 +458,26 @@
     .ex-anim-window img{animation:none;width:100%;object-fit:contain;}
   }
 
+
+  .tabs.sticky-nav{
+    position:sticky;top:0;z-index:50;
+    margin-left:-16px;margin-right:-16px;padding:6px 8px;
+    border-radius:0;border-left:0;border-right:0;
+    background:#0B1220;
+  }
+  @media (max-width:640px){
+    header.top{padding:4px 0 8px;}
+    header.top h1{font-size:20px;}
+    header.top .mark img{width:44px;height:44px;}
+    .who-chip{margin:0 0 8px;font-size:11px;}
+    .tab-btn{min-height:36px;font-size:11px;padding:6px 3px;}
+    .plan-dock{padding:8px;margin-bottom:8px;}
+    .session-card{padding:8px;margin-bottom:8px;}
+    .path-bar{display:none;}
+    .level-block{margin-top:8px;padding-top:8px;}
+    .sleep-item input[type=time]{font-size:15px;}
+  }
+
 </style>
 </head>
 <body>
@@ -474,7 +494,7 @@
   </header>
   <div class="who-chip" id="whoChip"></div>
 
-  <div class="tabs">
+  <div class="tabs sticky-nav">
     <button class="tab-btn active" id="tabTodayBtn" onclick="showTab('today')">Train</button>
     <button class="tab-btn" id="tabPlansBtn" onclick="showTab('plans')">Programs</button>
     <button class="tab-btn" id="tabCreateBtn" onclick="showTab('create')">Create</button>
@@ -492,7 +512,7 @@
     <img id="planHero" class="plan-hero" alt="Program">
   </div>
 
-  <div class="session-card">
+  <div class="session-card" id="sessionCard">
     <div class="sleep-bar">
       <div class="sleep-item">
         <div class="label">Wake</div>
@@ -1414,9 +1434,19 @@ function programStartDow(prog){
   if(prog && Number.isFinite(prog.startDow)) return prog.startDow;
   return weekStartDow;
 }
+function firstTrainIndex(week){
+  if(!week || !week.length) return 0;
+  const withMoves = week.findIndex(d=>d && d.type==='train' && (d.exercises||[]).length);
+  if(withMoves>=0) return withMoves;
+  const train = week.findIndex(d=>d && d.type==='train');
+  return train>=0 ? train : 0;
+}
 function slotOf(date, prog){
-  const start = programStartDow(prog || currentProgram());
-  return (date.getDay() - start + 7) % 7;
+  const p = prog || currentProgram();
+  const start = programStartDow(p);
+  const own = p && isOwnId(p.id);
+  const first = own ? 0 : firstTrainIndex(p && p.week);
+  return (first + (date.getDay() - start) + 7) % 7;
 }
 function WEEK(){
   const p = currentProgram();
@@ -1579,6 +1609,10 @@ function paintStartRows(){
 }
 function setCustomStartDow(i){
   customStartDow = i;
+  if(!customWeek) customWeek = defaultCustomWeek();
+  if(customWeek[0] && customWeek[0].type==='rest'){
+    customWeek[0] = { title:'My session', type:'train', exercises: customWeek[0].exercises||[] };
+  }
   paintStartRows();
   renderBuilder();
 }
@@ -1605,6 +1639,11 @@ function paintTrainDays(){
   }).join('');
 }
 function setTrainDay(i, on){
+  if(!on && i===0){
+    const note=document.getElementById('builderNote');
+    if(note) note.textContent='Day 1 (your start day) has to be a training day. Pick another start weekday if you want that calendar day off.';
+    return;
+  }
   if(on) customWeek[i] = { title:'My session', type:'train', exercises:(customWeek[i]&&customWeek[i].exercises)||[] };
   else customWeek[i] = { title:'Rest Day', type:'rest', exercises:[] };
   renderBuilder();
@@ -2014,18 +2053,56 @@ function exImg(ex){
   if(!ex) return '';
   return bag[ex.img] || bag[ex.id] || bag[String(ex.img||'').toLowerCase()] || '';
 }
+function isHomeMove(ex){
+  const p = currentProgram();
+  if(p && p.id==='home') return true;
+  const n = (ex && ex.name || '').toLowerCase();
+  return /chair|door-row|doorway|bottle|pike|knee push|sofa|table|hallway|good-morning|vacuum|lying leg|bodyweight|incline push-ups|chair squat/.test(n);
+}
+function photoFitsMove(ex){
+  const n = (ex && ex.name || '').toLowerCase();
+  if(/stretch|fold|cat-cow|cobra|open book|child.?s pose|walk \+|easy 20/.test(n)) return false;
+  if(isHomeMove(ex)) return false;
+  return true;
+}
+function homeHowTo(ex){
+  const n = (ex && ex.name || '').toLowerCase();
+  if(/push/.test(n)) return {eq:'Floor, sofa edge or wall — no bench press bar', start:'Hands on sofa or floor, body in a line', fin:'Press up until elbows straighten. Do not sag.'};
+  if(/dip/.test(n)) return {eq:'Sturdy chair, not a gym bench', start:'Hands on the seat behind you, knees bent', fin:'Lower a little, then press the chair away.'};
+  if(/squat|chair/.test(n)) return {eq:'Chair or sofa — no barbell', start:'Stand in front of the seat, feet planted', fin:'Sit with control, stand without using your hands.'};
+  if(/lunge/.test(n)) return {eq:'Hallway, bodyweight', start:'Tall stance', fin:'Long step, front heel down, back knee toward the floor.'};
+  if(/hinge|good-morning|rdl|deadlift/.test(n)) return {eq:'Bodyweight or two bags — no barbell needed', start:'Soft knees, hands at temples or on bags', fin:'Hips back, then stand tall. Spine stays long.'};
+  if(/row|pull/.test(n)) return {eq:'Doorway towel, table edge or bag — no barbell row', start:'Hinge and hold the towel/table', fin:'Pull your chest toward the hands, squeeze the back.'};
+  if(/raise|lateral/.test(n)) return {eq:'Water bottles or cans', start:'Arms by your sides', fin:'Lift to shoulder height, thumb slightly down, lower slow.'};
+  if(/pike|press|shoulder/.test(n)) return {eq:'Wall or floor — no overhead barbell', start:'Hips high or kneeling at the wall', fin:'Press the floor/wall away like a shoulder press.'};
+  if(/plank/.test(n)) return {eq:'Mat or carpet', start:'Elbows under shoulders', fin:'Hold a straight line, breathe.'};
+  if(/calf/.test(n)) return {eq:'Bottom step or thick book', start:'Balls of feet on the edge', fin:'Rise, pause, lower past the step.'};
+  if(/leg raise|dead bug/.test(n)) return {eq:'Floor', start:'On your back, low back pressed down', fin:'Raise legs or opposite arm/leg, then return slow.'};
+  if(/vacuum/.test(n)) return {eq:'No kit', start:'Stand tall, breathe out', fin:'Pull the waist in and hold.'};
+  if(/bridge|hip thrust|kickback/.test(n)) return {eq:'Floor or sofa edge — no barbell hip thrust', start:'Shoulders on floor or sofa, feet planted', fin:'Drive hips up and squeeze, then lower.'};
+  return {eq:'Home kit only — chair, bottles, floor or a bag', start:'Set your stance', fin:'Move with control, then return.'};
+}
 function diagramHtml(ex){
-  const src = exImg(ex);
+  const src = photoFitsMove(ex) ? exImg(ex) : '';
   if(src){
     return `<div class="ex-anim">
       <div class="ex-anim-window"><img src="${src}" alt="${ex.name} start to finish"></div>
       <div class="ex-anim-bar"><span class="on">START</span><span>FINISH</span></div>
+      <div class="cue-text" style="margin:8px 0 0">Still frames of <b>${ex.name}</b>. Use the video for timing and full motion.</div>
     </div>`;
   }
-  return `<div class="ex-diagram missing-photo"><div class="cue-text">Form photo for ${ex.name} loads from the image files. Keep img-1.js to img-women.js next to index.html.</div></div>`;
+  if(isHomeMove(ex)){
+    const h = homeHowTo(ex);
+    return `<div class="ex-fallback">
+      <div class="ex-panel"><b>START · HOME</b><div class="hint">${h.start}</div></div>
+      <div class="ex-panel"><b>FINISH · HOME</b><div class="hint">${h.fin}</div></div>
+    </div>
+    <div class="cue-text">Kit: ${h.eq}. No barbell or gym bench.</div>`;
+  }
+  return `<div class="ex-diagram missing-photo"><div class="cue-text">No matched still for ${ex.name}. Open the video — it searches this exact exercise name for a live how-to.</div></div>`;
 }
 function youtubeSearchUrl(name){
-  const q = encodeURIComponent(name + ' exercise form tutorial');
+  const q = encodeURIComponent('"' + name + '" proper form demonstration exercise');
   return `https://www.youtube.com/results?search_query=${q}`;
 }
 
@@ -2193,6 +2270,10 @@ function showTab(which){
   if(which==='fuel'){ renderWater(); renderMealLog(); }
   if(which==='plans') renderPlans();
   if(which==='create'){ renderBuilder(); renderOwnList(); }
+  const sess=document.getElementById('sessionCard');
+  if(sess) sess.style.display = which==='today' ? '' : 'none';
+  const dock=document.querySelector('.plan-dock');
+  if(dock) dock.style.display = (which==='today'||which==='plans') ? '' : 'none';
   if(which==='phone') renderAcct();
 }
 
@@ -2333,7 +2414,7 @@ async function renderToday(){
   if(plan.type==='rest'){
     document.getElementById('dayCount').textContent = '';
     document.getElementById('progressBar').style.width = '0%';
-    list.innerHTML = `<div class="rest-card"><h3>Rest Day</h3>Recovery is where the muscle you built this week actually grows. Sleep, protein, and hydration only.</div>`;
+    list.innerHTML = `<div class="rest-card"><h3>Rest Day · ${plan.name}</h3><p>No lifts today — that is the rest day on this program, not a missing list.</p><p>Use the arrows to open a training day, or Create to turn this weekday into a session. Your start day is always a training day.</p></div>`;
     return;
   }
 
