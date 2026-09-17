@@ -478,6 +478,16 @@
     .sleep-item input[type=time]{font-size:15px;}
   }
 
+
+  .bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px;}
+  @media(min-width:560px){.bank-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  .bank-card{background:#0E0E12;border:1px solid var(--card-border);border-radius:12px;padding:8px;cursor:pointer;text-align:left;}
+  .bank-card img{width:100%;height:88px;object-fit:cover;border-radius:8px;background:#fff;display:block;margin-bottom:6px;}
+  .bank-card .nm{font-size:12px;font-weight:700;color:var(--text);line-height:1.3;}
+  .bank-card .mg{font-size:10px;color:var(--accent);margin-top:2px;}
+  .bank-card .home-tag{font-size:10px;color:#9fdfb0;}
+  .bank-ph{height:88px;border-radius:8px;background:#18233f;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-align:center;padding:6px;}
+
 </style>
 </head>
 <body>
@@ -683,8 +693,11 @@
       <label class="label">Day to edit</label>
       <select id="builderDay" onchange="renderBuilder()" style="width:100%;margin:6px 0 10px;background:#0E0E12;color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:10px;font:inherit"></select>
       <div id="builderList"></div>
-      <label class="label">Exercise name — suggestions appear as you type</label>
-      <input id="builderNewName" list="exSuggest" type="text" placeholder="Start typing squat, row, press..." style="width:100%;margin:6px 0;background:#0E0E12;color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:10px;font:inherit" oninput="hintCustomPhoto()">
+      <label class="label">Muscle to train</label>
+      <div class="level-row" id="muscleGroupRow" style="margin:8px 0 10px"></div>
+      <div id="bankGrid" class="bank-grid"></div>
+      <label class="label">Or type an exercise name</label>
+      <input id="builderNewName" list="exSuggest" type="text" placeholder="Start typing squat, row, curl, flag..." style="width:100%;margin:6px 0;background:#0E0E12;color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:10px;font:inherit" oninput="hintCustomPhoto()">
       <datalist id="exSuggest"></datalist>
       <div id="photoHint" class="prog-meta"></div>
       <div class="plan-row" style="margin-top:8px">
@@ -1370,6 +1383,42 @@ let PROGRAMS = [
       ]},
     ]
   },
+  {
+    id:'humanflag',
+    name:'Human Flag',
+    days:'4 days · 35-50 min · pole or playground bar',
+    level:'Semi-pro to Pro',
+    goal:'Build the side-body strength to hold a human flag: vertical hang, tucked flag, then a straight flag.',
+    best:'Calisthenics, playground bar, or a solid vertical pole at home. No barbell.',
+    week:[
+      { title:'Hang + grip', type:'train', exercises:[
+        E('mon2','Dead hang on a bar or pole',4,'20-40s','60s','Bodyweight','Hands stacked or close. Shoulders packed. Breathe. This is the flag grip.',['Lats','Grip']),
+        E('mon3','Vertical pole hug / climb hold',3,'20s','60s','Bodyweight','Hug a pole or doorframe edge. Pull the body into the post.',['Lats','Core']),
+        E('tue7','Side Plank',4,'25s/side','30s','Bodyweight','The flag is a side plank in the air. Keep a long line.',['Obliques']),
+        E('mon6','Standing Stomach Vacuum',3,'20s hold','20s','Bodyweight','Brace the waist before every hang.',['Deep Abs']),
+      ]},
+      restDay,
+      { title:'Tuck flag', type:'train', exercises:[
+        E('tue7','Side plank + clam',3,'10/side','45s','Bodyweight','Open the top hip. Same pattern as kicking into a tuck flag.',['Obliques','Glutes']),
+        E('tue6','Hanging Leg Raise',3,'8-12','75s','Bar','Raise knees toward the high hand side.',['Abs','Hip Flexors']),
+        E('mon2','Tuck flag attempt',6,'5-12s','90s','Pole / bar','Bottom hand pushes, top hand pulls. Knees tucked. Short holds beat sloppy long ones.',['Obliques','Lats','Shoulders']),
+        E('thu4','Incline Push-Ups',3,'10-15','60s','Home','Press strength for the bottom arm.',['Chest','Triceps']),
+      ]},
+      restDay,
+      { title:'Straddle toward full flag', type:'train', exercises:[
+        E('mon2','Straddle flag attempt',6,'3-10s','90s','Pole / bar','Legs open to shorten the lever. Push + pull at the same time.',['Obliques','Lats']),
+        E('wed4','Walking Lunges',3,'10/leg','60s','Bodyweight','Strong legs help the kick-up.',['Quads','Glutes']),
+        E('tue5','Plank',3,'40s','30s','Bodyweight','Total body line.',['Abs']),
+        E('tue1','Pike / Kneeling Press substitute',3,'8-10','60s','Wall / floor','Top-arm press pattern.',['Shoulders']),
+      ]},
+      restDay,
+      { title:'Skill play', type:'train', exercises:[
+        E('mon2','Flag entries only',8,'3s','60s','Pole / bar','Kick up, find the line, come down. Quality over hold time.',['Obliques','Lats']),
+        E('tue7','Side Plank',3,'30s/side','30s','Bodyweight','Slow side support.',['Obliques']),
+        E('mon6','Standing Stomach Vacuum',3,'20s hold','20s','Bodyweight','Keep the waist tight on every entry.',['Deep Abs']),
+      ]},
+    ]
+  },
 ];
 
 const OUTCOMES = {
@@ -1383,6 +1432,7 @@ const OUTCOMES = {
   stretchresist: { look:'Strong and mobile', shape:'You get stronger without stiff hips and a locked chest. Moves better in clothes and in sport.' },
   home: { look:'Fit without a gym', shape:'Tighter midsection, working arms and legs, no machines required.' },
   glute: { look:'Glute + waist shape', shape:'Fuller glutes, tighter waist, athletic legs — the look this plan is built for, home or gym.' },
+  humanflag: { look:'Side-body skill shape', shape:'A visible oblique line and a calisthenics hold people notice — built on a pole or bar, not a barbell.' },
 };
 function outcomeOf(p){ return OUTCOMES[p.id] || { look:'Visible change', shape:p.goal }; }
 
@@ -1472,8 +1522,83 @@ let editingOwnId = null;
 let ownPrograms = [];
 let weekStartDow = 0;
 
+const MUSCLE_GROUPS = [
+  {id:'all', label:'All'},
+  {id:'home', label:'Home'},
+  {id:'chest', label:'Chest'},
+  {id:'back', label:'Back'},
+  {id:'shoulders', label:'Shoulders'},
+  {id:'biceps', label:'Biceps'},
+  {id:'triceps', label:'Triceps'},
+  {id:'core', label:'Belly'},
+  {id:'quads', label:'Quads'},
+  {id:'hams', label:'Hamstrings'},
+  {id:'glutes', label:'Glutes'},
+  {id:'calves', label:'Calves'},
+  {id:'skill', label:'Skill / Flag'}
+];
+let activeMuscleGroup = 'all';
+function B(group, img, name, muscles, cue, home){
+  return { group, img, name, muscles, cue, home:!!home, sets:3, reps:'10-12', rest:'60s', weight: home?'Home kit':'Moderate' };
+}
+const EXERCISE_BANK = [
+  B('chest','sat1','Flat Dumbbell Bench Press',['Chest','Triceps'],'Wrists stacked, lower to mid-chest, press up.'),
+  B('chest','sat2','Incline Dumbbell Press',['Upper Chest','Shoulders'],'Bench 30°. Press toward the ceiling.'),
+  B('chest','sat3','Cable Chest Fly',['Chest'],'Soft elbows, hug a tree, squeeze.'),
+  B('chest','thu4','Incline Push-Ups (home)',['Chest','Triceps'],'Hands on sofa or wall. Body straight.', true),
+  B('chest','thu4','Knee Push-Ups (home)',['Chest','Triceps'],'Knees down, same line from head to hips.', true),
+  B('chest','thu2','Chair Dips (home)',['Triceps','Chest'],'Hands on a sturdy chair behind you.', true),
+  B('back','mon1','Wide-Grip Lat Pulldown',['Lats','Back'],'Pull the bar to the chest, not behind the neck.'),
+  B('back','mon2','Pull-Ups',['Lats','Biceps'],'Chest to bar, lower slow.'),
+  B('back','mon3','Single-Arm Dumbbell Row',['Lats','Back'],'Elbow to hip. Do not twist.'),
+  B('back','fri1','Barbell / T-Bar Row',['Back','Lats'],'Hinge, row to the belly.'),
+  B('back','fri2','Seated Cable Row',['Back','Biceps'],'Squeeze shoulder blades, sit tall.'),
+  B('back','fri3','Chest-Supported Row',['Back'],'Chest on the pad so the lower back rests.'),
+  B('back','mon2','Door-row / table row (home)',['Lats','Back'],'Row under a table or with a towel in a door.', true),
+  B('back','mon4','Straight-Arm Pulldown',['Lats'],'Arms long, push the bar to the hips.'),
+  B('back','mon5','Face Pulls',['Rear Delts','Upper Back'],'Pull to the face, elbows high.'),
+  B('shoulders','tue1','Seated Dumbbell Overhead Press',['Shoulders','Triceps'],'Press up, do not flare the ribs.'),
+  B('shoulders','tue2','Dumbbell Lateral Raise',['Side Delts'],'Lead with elbows, stop at shoulder height.'),
+  B('shoulders','tue3','Cable Lateral Raise',['Side Delts'],'Same path as the dumbbell raise.'),
+  B('shoulders','tue4','Rear Delt Cable Fly',['Rear Delts'],'Open the arms like a reverse hug.'),
+  B('shoulders','tue2','Bottle lateral raise (home)',['Side Delts'],'Water bottles. Same path.', true),
+  B('shoulders','tue1','Pike / wall press (home)',['Shoulders'],'Hips high or kneeling at a wall.', true),
+  B('biceps','fri4','Barbell Curl',['Biceps'],'Elbows pinned. No swing.'),
+  B('biceps','fri5','Incline Dumbbell Curl',['Biceps'],'On an incline so the stretch is long.'),
+  B('biceps','fri4','Bag or bottle curl (home)',['Biceps'],'A backpack or bottles. Slow down.', true),
+  B('biceps','mon2','Chin-Up',['Biceps','Lats'],'Palms toward you. Chest to bar.'),
+  B('triceps','sat4','Tricep Rope Pushdown',['Triceps'],'Elbows glued to the ribs, open the rope at the bottom.'),
+  B('triceps','thu2','Parallel Bar Dips',['Triceps','Chest'],'Slight lean, lock out without shrugging.'),
+  B('triceps','sat4','Chair overhead extension (home)',['Triceps'],'One bottle behind the head, extend.', true),
+  B('core','tue5','Plank',['Abs'],'Straight line. Do not pike or sag.', true),
+  B('core','tue7','Side Plank',['Obliques'],'Hips high. Each side.', true),
+  B('core','tue6','Hanging Leg Raise',['Lower Abs','Hip Flexors'],'Pelvis curls up, not just the legs.'),
+  B('core','tue6','Lying leg raise (home)',['Lower Abs'],'Back pressed into the floor.', true),
+  B('core','mon6','Standing Stomach Vacuum',['Deep Abs'],'Breathe out and pull the waist in.', true),
+  B('core','tue6','Dead bug (home)',['Abs'],'Opposite arm and leg. Slow.', true),
+  B('quads','wed1','Barbell Back Squat',['Quads','Glutes'],'Sit between the heels, chest up.'),
+  B('quads','wed3','Leg Press',['Quads','Glutes'],'Do not lock the knees hard.'),
+  B('quads','wed4','Walking Lunges',['Quads','Glutes'],'Long step, front heel down.', true),
+  B('quads','wed1','Chair squat (home)',['Quads','Glutes'],'Sit to a chair, stand without hands.', true),
+  B('quads','w_squat','Goblet squat',['Quads','Glutes'],'Hold a bag or DB at the chest.'),
+  B('hams','wed2','Romanian Deadlift',['Hamstrings','Glutes'],'Hips back, bar close to the legs.'),
+  B('hams','wed2','Hip hinge good-morning (home)',['Hamstrings'],'Hands at temples, hips back.', true),
+  B('glutes','w_hip','Hip thrust or sofa bridge',['Glutes'],'Shoulders on sofa, drive hips up.', true),
+  B('glutes','w_lunge','Reverse lunge',['Glutes','Quads'],'Step back, front heel stays down.', true),
+  B('glutes','wed5','Glute kickback (floor)',['Glutes'],'Heel to the ceiling, hips square.', true),
+  B('calves','wed5','Standing Calf Raise',['Calves'],'Up, pause, lower past the step.', true),
+  B('skill','mon2','Dead hang',['Grip','Lats'],'Shoulders packed. Hold.', true),
+  B('skill','mon2','Tuck human flag',['Obliques','Lats','Shoulders'],'Bottom hand pushes, top hand pulls. Knees tucked.', true),
+  B('skill','mon2','Straddle human flag',['Obliques','Lats'],'Legs open to shorten the lever.', true),
+  B('skill','mon2','Full human flag attempt',['Obliques','Lats','Shoulders'],'Body in one line with the pole.', true),
+  B('home','thu4','Wall push-up',['Chest','Triceps'],'Hands on the wall, walk the feet back.', true),
+  B('home','tue5','Mountain-climber hold',['Abs'],'Plank, then slow knee drives.', true),
+  B('home','wed3','Step-up on a chair',['Quads','Glutes'],'Whole foot on the chair, drive the heel.', true),
+  B('home','mon3','Backpack row',['Back'],'Hinge and row a loaded bag.', true)
+];
 function exerciseCatalog(){
   const seen = new Map();
+  EXERCISE_BANK.forEach(ex=>{ if(!seen.has(ex.name)) seen.set(ex.name, ex); });
   PROGRAMS.forEach(p=>{
     if(isOwnId(p.id) || p.id==='custom') return;
     (p.week||[]).forEach(d=>{
@@ -1483,6 +1608,36 @@ function exerciseCatalog(){
     });
   });
   return Array.from(seen.values()).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function bankFiltered(){
+  if(activeMuscleGroup==='all') return EXERCISE_BANK;
+  if(activeMuscleGroup==='home') return EXERCISE_BANK.filter(x=>x.home);
+  return EXERCISE_BANK.filter(x=>x.group===activeMuscleGroup);
+}
+function paintMuscleGroups(){
+  const row=document.getElementById('muscleGroupRow');
+  if(!row) return;
+  row.innerHTML = MUSCLE_GROUPS.map(g=>`<button type="button" class="lvl-btn ${g.id===activeMuscleGroup?'on':''}" onclick="setMuscleGroup('${g.id}')">${g.label}</button>`).join('');
+}
+function setMuscleGroup(id){
+  activeMuscleGroup = id;
+  paintMuscleGroups();
+  renderBankGrid();
+}
+function renderBankGrid(){
+  const box=document.getElementById('bankGrid');
+  if(!box) return;
+  const bag=window.EX_IMAGES||{};
+  box.innerHTML = bankFiltered().map((ex,i)=>{
+    const src = bag[ex.img] || '';
+    const pic = src ? `<img src="${src}" alt="${ex.name}">` : `<div class="bank-ph">${ex.home?'Home how-to':'Form photo'}</div>`;
+    return `<button type="button" class="bank-card" onclick="addBankExercise('${ex.name.replace(/'/g,"\\'")}')">${pic}<div class="nm">${ex.name}</div><div class="mg">${(ex.muscles||[]).join(' · ')}</div>${ex.home?'<div class="home-tag">Home kit</div>':''}</button>`;
+  }).join('');
+}
+function addBankExercise(name){
+  const inp=document.getElementById('builderNewName');
+  if(inp) inp.value=name;
+  addCustomByName();
 }
 function guessExercise(name){
   const n = (name||'').trim();
@@ -1593,9 +1748,13 @@ function hintCustomPhoto(){
   const hint = document.getElementById('photoHint');
   if(!inp || !hint) return;
   const g = guessExercise(inp.value);
-  if(!inp.value.trim()){ hint.textContent=''; return; }
-  const hasPic = !!(g && g.img && (window.EX_IMAGES||{})[g.img]);
-  hint.textContent = hasPic ? ('Photo ready: '+g.name) : 'No stock photo for that name yet — we still save the move with a written cue.';
+  if(!inp.value.trim()){ hint.innerHTML=''; return; }
+  const src = g && g.img && (window.EX_IMAGES||{})[g.img];
+  if(src){
+    hint.innerHTML = `<img src="${src}" alt="" style="width:100%;max-height:140px;object-fit:contain;background:#fff;border-radius:8px;margin:6px 0"><div>Photo ready: ${g.name} · ${(g.muscles||[]).join(', ')}</div>`;
+  } else {
+    hint.textContent = g ? (g.name+' · '+(g.muscles||[]).join(', ')+' — home how-to on Train') : 'We will save the name and write a cue.';
+  }
 }
 function paintStartRows(){
   const mk = (id, current, fn)=>{
@@ -1708,6 +1867,8 @@ function renderBuilder(){
   }
   const dl = document.getElementById('exSuggest');
   if(dl) dl.innerHTML = exerciseCatalog().map(ex=>`<option value="${ex.name}"></option>`).join('');
+  paintMuscleGroups();
+  renderBankGrid();
   paintStartRows();
   paintTrainDays();
   renderOwnList();
