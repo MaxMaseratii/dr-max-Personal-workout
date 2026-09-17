@@ -463,6 +463,10 @@
       <div class="label">Level for this session</div>
       <div class="level-row" id="levelRow"></div>
     </div>
+    <div class="level-block">
+      <div class="label">Program week starts on</div>
+      <div class="level-row" id="globalStartRow"></div>
+    </div>
     <div class="sched-actions">
       <button type="button" class="btn-save" id="saveHoursBtn" onclick="saveAllSession(true)">SAVE</button>
       <span class="save-note" id="saveNote"></span>
@@ -603,10 +607,20 @@
 
   <div id="tabCreate" style="display:none;">
     <div class="fuel-card">
-      <h3>Create my Work Out Program</h3>
-      <p>Name it, pick how many training days, add world exercises from the list (those have photos), set sets / reps / weight, then save. It will show on Train.</p>
+      <h3>My saved programs</h3>
+      <p>Save up to 30 of your own. Tap Train to use one today, or Edit to change it.</p>
+      <div id="ownList"></div>
+      <div class="sched-actions" style="margin-top:10px">
+        <button type="button" class="use-btn" onclick="newOwnDraft()">+ New program</button>
+      </div>
+    </div>
+    <div class="fuel-card">
+      <h3 id="createTitle">Create my Work Out Program</h3>
+      <p>Name it. Pick which weekday Day 1 starts on. Add exercises with sets, reps and weight. Then save — it appears on Train under that name.</p>
       <label class="label">Program name</label>
       <input id="customName" type="text" placeholder="e.g. Max Home Week" style="width:100%;margin:6px 0 10px;background:#0E0E12;color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:10px;font:inherit">
+      <label class="label">Week starts on</label>
+      <div class="level-row" id="startDowRow" style="margin:8px 0 12px"></div>
       <label class="label">Training days this week</label>
       <div class="level-row" id="trainDaysRow" style="margin:8px 0 12px"></div>
       <label class="label">Day to edit</label>
@@ -623,7 +637,7 @@
         <button type="button" class="use-btn" onclick="addCustomByName()">Add exercise</button>
       </div>
       <div class="sched-actions" style="margin-top:14px">
-        <button type="button" class="btn-save" onclick="saveCustomProgram()">SAVE MY PROGRAM</button>
+        <button type="button" class="btn-save" onclick="saveCustomProgram()">SAVE PROGRAM</button>
       </div>
       <p class="save-note" id="builderNote"></p>
     </div>
@@ -866,7 +880,7 @@ function E(img,name,sets,reps,rest,weight,cue,muscles){
 }
 const restDay = { title:'Rest Day', type:'rest', exercises:[] };
 
-const PROGRAMS = [
+let PROGRAMS = [
   {
     id:'vtaper',
     name:'Dr Max V-Taper',
@@ -1326,14 +1340,15 @@ async function loadFollowed(){
   if(!followedIds.includes(activeProgramId)){
     followedIds.unshift(activeProgramId);
   }
-  followedIds = followedIds.filter((id,i,a)=>PROGRAMS.some(p=>p.id===id) && a.indexOf(id)===i).slice(0,MAX_FOLLOW);
+  followedIds = followedIds.filter((id,i,a)=>(PROGRAMS.some(p=>p.id===id) || isOwnId(id) || id==='custom') && a.indexOf(id)===i);
 }
 async function followPlan(id, on){
   await loadFollowed();
   if(on){
     if(!followedIds.includes(id)){
-      if(followedIds.length>=MAX_FOLLOW){
-        alert('You can follow 4 plans at once. Unfollow one first.');
+      const builtInFollowed = followedIds.filter(x=>!isOwnId(x)).length;
+      if(!isOwnId(id) && builtInFollowed>=MAX_FOLLOW){
+        alert('You can follow 4 ready-made plans at once. Your own programs do not count toward that.');
         return;
       }
       followedIds.push(id);
@@ -1353,23 +1368,47 @@ async function followPlan(id, on){
 }
 
 let activeProgramId = 'vtaper';
+function isOwnId(id){ return !!(id && String(id).indexOf('own-')===0); }
 function currentProgram(){
-  ensureCustomProgram();
+  syncOwnIntoPrograms();
   return PROGRAMS.find(p=>p.id===activeProgramId) || PROGRAMS[0];
 }
+function programStartDow(prog){
+  if(prog && Number.isFinite(prog.startDow)) return prog.startDow;
+  return weekStartDow;
+}
+function slotOf(date, prog){
+  const start = programStartDow(prog || currentProgram());
+  return (date.getDay() - start + 7) % 7;
+}
 function WEEK(){
-  const w = currentProgram().week;
-  return w.map((day,i)=>({ name:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][i], ...day }));
+  const p = currentProgram();
+  const w = (p && p.week) ? p.week : defaultCustomWeek();
+  const start = programStartDow(p);
+  return w.map((day,i)=>{
+    const dow = (start + i) % 7;
+    return { name: DAY_NAMES[dow], slot:i, ...day };
+  });
+}
+function todayPlan(date){
+  const p = currentProgram();
+  const w = WEEK();
+  return w[slotOf(date || viewedDate, p)] || w[0];
 }
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MAX_OWN = 30;
 let customWeek = null;
-let customName = 'My Program';
+let customName = '';
+let customStartDow = 1;
+let editingOwnId = null;
+let ownPrograms = [];
+let weekStartDow = 0;
 
 function exerciseCatalog(){
   const seen = new Map();
   PROGRAMS.forEach(p=>{
-    if(p.id==='custom') return;
+    if(isOwnId(p.id) || p.id==='custom') return;
     (p.week||[]).forEach(d=>{
       (d.exercises||[]).forEach(ex=>{
         if(!seen.has(ex.name)) seen.set(ex.name, ex);
@@ -1398,54 +1437,89 @@ function guessExercise(name){
   return E('wed1', n, 3, '10-12', '75s', 'Moderate', cue, muscle);
 }
 function defaultCustomWeek(){
-  return DAY_NAMES.map((name,i)=>({
-    title: i===0 ? 'Rest Day' : 'My session',
-    type: i===0 ? 'rest' : 'train',
-    exercises: []
-  }));
+  return DAY_NAMES.map(()=>({ title:'My session', type:'train', exercises:[] }));
 }
-function ensureCustomProgram(){
-  if(PROGRAMS.some(p=>p.id==='custom')) return;
-  PROGRAMS.push({
-    id:'custom',
-    name:'My Program',
-    days:'You choose · custom',
-    level:'Your call',
-    goal:'A session built from the moves you typed, plus library exercises you added.',
-    best:'You want your own order so training does not get boring.',
-    week: customWeek || defaultCustomWeek()
+function ownToProg(o){
+  const trainN = (o.week||[]).filter(d=>d && d.type==='train').length;
+  return {
+    id: o.id,
+    name: o.name || 'My Program',
+    days: trainN + ' training days · custom',
+    level: 'Your call',
+    goal: 'A session you built: your moves, order, sets, reps and weight.',
+    best: 'Train this whenever you want. Edit it any time.',
+    startDow: Number.isFinite(o.startDow) ? o.startDow : 1,
+    week: o.week || defaultCustomWeek()
+  };
+}
+function syncOwnIntoPrograms(){
+  PROGRAMS = PROGRAMS.filter(p=>!isOwnId(p.id) && p.id!=='custom');
+  ownPrograms.forEach(o=>{
+    PROGRAMS.push(ownToProg(o));
+    OUTCOMES[o.id] = { look:'Your own shape goal', shape:'Whatever you train most will grow first.' };
   });
-  OUTCOMES.custom = { look:'Your own shape goal', shape:'Whatever you train most will grow first. Reorder weekly so no muscle gets ignored.' };
 }
-async function loadCustomWeek(){
-  try{
-    const raw = await storeGet('customWeek');
-    customWeek = raw ? JSON.parse(raw) : defaultCustomWeek();
-  }catch(e){ customWeek = defaultCustomWeek(); }
-  try{ customName = (await storeGet('customName')) || 'My Program'; }catch(e){ customName = 'My Program'; }
-  ensureCustomProgram();
-  const p = PROGRAMS.find(x=>x.id==='custom');
-  if(p){ p.week = customWeek; p.name = customName; }
+function draftFromOwn(o){
+  customName = (o && o.name) || '';
+  customStartDow = (o && Number.isFinite(o.startDow)) ? o.startDow : weekStartDow;
+  customWeek = JSON.parse(JSON.stringify((o && o.week) || defaultCustomWeek()));
+  editingOwnId = o ? o.id : null;
 }
-async function persistCustomWeek(){
-  ensureCustomProgram();
+function newOwnDraft(){
+  editingOwnId = null;
+  customName = '';
+  customStartDow = weekStartDow;
+  customWeek = defaultCustomWeek();
   const nameEl = document.getElementById('customName');
-  const name = ((nameEl && nameEl.value) || customName || 'My Program').trim() || 'My Program';
-  customName = name;
-  const p = PROGRAMS.find(x=>x.id==='custom');
-  if(p){
-    p.week = customWeek;
-    p.name = name;
-    const trainN = (customWeek||[]).filter(d=>d && d.type==='train').length;
-    p.days = trainN + ' training days · custom';
+  if(nameEl) nameEl.value = '';
+  const title = document.getElementById('createTitle');
+  if(title) title.textContent = 'Create my Work Out Program';
+  renderBuilder();
+  const note = document.getElementById('builderNote');
+  if(note) note.textContent = 'New draft. Name it, add moves, then save.';
+}
+async function loadOwnPrograms(){
+  ownPrograms = [];
+  try{
+    const raw = await storeGet('ownPrograms');
+    if(raw) ownPrograms = JSON.parse(raw) || [];
+  }catch(e){ ownPrograms = []; }
+  if(!Array.isArray(ownPrograms)) ownPrograms = [];
+  if(!ownPrograms.length){
+    try{
+      const raw = await storeGet('customWeek');
+      const name = (await storeGet('customName')) || 'My Program';
+      if(raw){
+        ownPrograms.push({
+          id: 'own-legacy',
+          name: name,
+          startDow: weekStartDow,
+          week: JSON.parse(raw)
+        });
+        await storeSet('ownPrograms', JSON.stringify(ownPrograms));
+      }
+    }catch(e){}
   }
-  await storeSet('customWeek', JSON.stringify(customWeek));
-  await storeSet('customName', name);
+  if(!ownPrograms.length){
+    draftFromOwn(null);
+  } else if(!editingOwnId){
+    draftFromOwn(ownPrograms[0]);
+  }
+  try{
+    const gs = parseInt(await storeGet('weekStartDow'), 10);
+    if(Number.isFinite(gs)) weekStartDow = gs;
+  }catch(e){}
+  syncOwnIntoPrograms();
+}
+async function persistOwnLibrary(){
+  await storeSet('ownPrograms', JSON.stringify(ownPrograms));
+  await storeSet('weekStartDow', String(weekStartDow));
+  syncOwnIntoPrograms();
 }
 function builderDayIndex(){
   const sel = document.getElementById('builderDay');
-  const v = sel ? parseInt(sel.value,10) : new Date().getDay();
-  return Number.isFinite(v) ? v : new Date().getDay();
+  const v = sel ? parseInt(sel.value,10) : 0;
+  return Number.isFinite(v) ? v : 0;
 }
 function hintCustomPhoto(){
   const inp = document.getElementById('builderNewName');
@@ -1456,33 +1530,109 @@ function hintCustomPhoto(){
   const hasPic = !!(g && g.img && (window.EX_IMAGES||{})[g.img]);
   hint.textContent = hasPic ? ('Photo ready: '+g.name) : 'No stock photo for that name yet — we still save the move with a written cue.';
 }
+function paintStartRows(){
+  const mk = (id, current, fn)=>{
+    const row = document.getElementById(id);
+    if(!row) return;
+    row.innerHTML = DAY_NAMES.map((n,i)=>`<button type="button" class="lvl-btn ${i===current?'on':''}" onclick="${fn}(${i})">${n.slice(0,3)}<small>Day 1</small></button>`).join('');
+  };
+  mk('startDowRow', customStartDow, 'setCustomStartDow');
+  mk('globalStartRow', isOwnId(activeProgramId) ? programStartDow(currentProgram()) : weekStartDow, 'setGlobalStartDow');
+}
+function setCustomStartDow(i){
+  customStartDow = i;
+  paintStartRows();
+  renderBuilder();
+}
+async function setGlobalStartDow(i){
+  if(isOwnId(activeProgramId)){
+    const o = ownPrograms.find(x=>x.id===activeProgramId);
+    if(o){ o.startDow = i; await persistOwnLibrary(); }
+  } else {
+    weekStartDow = i;
+    await storeSet('weekStartDow', String(i));
+  }
+  paintStartRows();
+  try{ renderToday(); }catch(e){}
+  try{ renderCalendar(); }catch(e){}
+}
 function paintTrainDays(){
   const row = document.getElementById('trainDaysRow');
   if(!row || !customWeek) return;
-  row.innerHTML = DAY_NAMES.map((n,i)=>{
-    const on = customWeek[i] && customWeek[i].type==='train';
-    return `<button type="button" class="lvl-btn ${on?'on':''}" onclick="setTrainDay(${i},${on?'false':'true'})">${n.slice(0,3)}<small>${on?'Train':'Rest'}</small></button>`;
+  row.innerHTML = customWeek.map((d,i)=>{
+    const on = d && d.type==='train';
+    const dow = DAY_NAMES[(customStartDow + i) % 7].slice(0,3);
+    return `<button type="button" class="lvl-btn ${on?'on':''}" onclick="setTrainDay(${i},${on?'false':'true'})">D${i+1} ${dow}<small>${on?'Train':'Rest'}</small></button>`;
   }).join('');
 }
 function setTrainDay(i, on){
   if(on) customWeek[i] = { title:'My session', type:'train', exercises:(customWeek[i]&&customWeek[i].exercises)||[] };
   else customWeek[i] = { title:'Rest Day', type:'rest', exercises:[] };
-  persistCustomWeek();
   renderBuilder();
 }
+function renderOwnList(){
+  const box = document.getElementById('ownList');
+  if(!box) return;
+  if(!ownPrograms.length){
+    box.innerHTML = '<p class="prog-meta">Nothing saved yet. Build one below and press SAVE PROGRAM.</p>';
+    return;
+  }
+  box.innerHTML = ownPrograms.map(o=>{
+    const n = (o.week||[]).filter(d=>d && d.type==='train' && (d.exercises||[]).length).length;
+    const using = activeProgramId===o.id;
+    return `<div class="builder-row" style="margin-bottom:8px">
+      <span><b style="color:var(--text)">${o.name||'Untitled'}</b><br><span class="prog-meta">${n} days with moves · starts ${DAY_NAMES[(o.startDow||0)%7]}</span></span>
+      <span>
+        <button type="button" class="use-btn ${using?'on':''}" onclick="chooseProgram('${o.id}')">Train</button>
+        <button type="button" class="ghost-btn" onclick="editOwnProgram('${o.id}')">Edit</button>
+        <button type="button" class="ghost-btn" onclick="deleteOwnProgram('${o.id}')">Delete</button>
+      </span>
+    </div>`;
+  }).join('');
+}
+function editOwnProgram(id){
+  const o = ownPrograms.find(x=>x.id===id);
+  if(!o) return;
+  draftFromOwn(o);
+  const nameEl = document.getElementById('customName');
+  if(nameEl) nameEl.value = o.name || '';
+  const title = document.getElementById('createTitle');
+  if(title) title.textContent = 'Edit — '+(o.name||'program');
+  renderBuilder();
+  showTab('create');
+}
+async function deleteOwnProgram(id){
+  if(!confirm('Delete this saved program?')) return;
+  ownPrograms = ownPrograms.filter(x=>x.id!==id);
+  await persistOwnLibrary();
+  if(activeProgramId===id){
+    activeProgramId = ownPrograms[0] ? ownPrograms[0].id : 'vtaper';
+    await storeSet('programId', activeProgramId);
+  }
+  if(editingOwnId===id) newOwnDraft();
+  fillPlanSelect();
+  renderOwnList();
+  renderToday();
+}
 function renderBuilder(){
-  ensureCustomProgram();
+  syncOwnIntoPrograms();
   if(!customWeek) customWeek = defaultCustomWeek();
   const nameEl = document.getElementById('customName');
-  if(nameEl && !nameEl.value) nameEl.value = customName || '';
+  if(nameEl && document.activeElement!==nameEl) nameEl.value = customName || nameEl.value || '';
   const daySel = document.getElementById('builderDay');
-  if(daySel && !daySel.options.length){
-    daySel.innerHTML = DAY_NAMES.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
-    daySel.value = String(new Date().getDay());
+  if(daySel){
+    const keep = daySel.value;
+    daySel.innerHTML = customWeek.map((d,i)=>{
+      const dow = DAY_NAMES[(customStartDow + i) % 7];
+      return `<option value="${i}">Day ${i+1} · ${dow}${d.type==='rest'?' · rest':''}</option>`;
+    }).join('');
+    if(keep!=='') daySel.value = keep;
   }
   const dl = document.getElementById('exSuggest');
   if(dl) dl.innerHTML = exerciseCatalog().map(ex=>`<option value="${ex.name}"></option>`).join('');
+  paintStartRows();
   paintTrainDays();
+  renderOwnList();
   const i = builderDayIndex();
   const day = customWeek[i];
   const box = document.getElementById('builderList');
@@ -1492,7 +1642,7 @@ function renderBuilder(){
     return;
   }
   if(!day.exercises.length){
-    box.innerHTML = `<p class="prog-meta">No moves yet on ${DAY_NAMES[i]}. Add one below. <button type="button" class="ghost-btn" onclick="toggleBuilderRest()">Mark rest instead</button></p>`;
+    box.innerHTML = `<p class="prog-meta">No moves yet on Day ${i+1}. Add one below.</p>`;
     return;
   }
   box.innerHTML = day.exercises.map((ex,idx)=>`
@@ -1503,7 +1653,7 @@ function renderBuilder(){
         <button type="button" class="ghost-btn" onclick="moveCustom(${idx},1)">↓</button>
         <button type="button" class="ghost-btn" onclick="removeCustom(${idx})">Remove</button>
       </span>
-    </div>`).join('') + `<p class="prog-meta" style="margin-top:8px"><button type="button" class="ghost-btn" onclick="toggleBuilderRest()">Mark ${DAY_NAMES[i]} as rest</button></p>`;
+    </div>`).join('');
 }
 function toggleBuilderRest(){
   const i = builderDayIndex();
@@ -1513,16 +1663,17 @@ function toggleBuilderRest(){
   } else {
     customWeek[i] = { title:'Rest Day', type:'rest', exercises:[] };
   }
-  persistCustomWeek();
   renderBuilder();
 }
 function addCustomByName(){
   const inp = document.getElementById('builderNewName');
   const name = (inp && inp.value || '').trim();
   if(!name) return;
+  if(!customWeek) customWeek = defaultCustomWeek();
   const i = builderDayIndex();
   if(customWeek[i].type==='rest') customWeek[i] = { title:'My session', type:'train', exercises:[] };
   const ex = guessExercise(name);
+  if(!ex) return;
   const sets = parseInt((document.getElementById('builderSets')||{}).value,10);
   const reps = ((document.getElementById('builderReps')||{}).value||'').trim();
   const weight = ((document.getElementById('builderWeight')||{}).value||'').trim();
@@ -1531,16 +1682,8 @@ function addCustomByName(){
   if(weight) ex.weight = weight;
   customWeek[i].exercises.push(ex);
   if(inp) inp.value = '';
-  persistCustomWeek();
-  renderBuilder();
-}
-function addCustomFromLib(){
-  const sel = document.getElementById('builderLib');
-  if(!sel || !sel.value) return;
-  const i = builderDayIndex();
-  if(customWeek[i].type==='rest') customWeek[i] = { title:'My session', type:'train', exercises:[] };
-  customWeek[i].exercises.push(guessExercise(sel.value));
-  persistCustomWeek();
+  const nameEl = document.getElementById('customName');
+  if(nameEl) customName = nameEl.value.trim();
   renderBuilder();
 }
 function moveCustom(idx, dir){
@@ -1549,31 +1692,59 @@ function moveCustom(idx, dir){
   const j = idx+dir;
   if(j<0 || j>=arr.length) return;
   const tmp = arr[idx]; arr[idx]=arr[j]; arr[j]=tmp;
-  persistCustomWeek();
   renderBuilder();
 }
 function removeCustom(idx){
   const i = builderDayIndex();
   customWeek[i].exercises.splice(idx,1);
-  persistCustomWeek();
   renderBuilder();
 }
 async function saveCustomProgram(){
+  const note = document.getElementById('builderNote');
   try{
-    await persistCustomWeek();
-    if(!followedIds.includes('custom')){
-      if(followedIds.length>=MAX_FOLLOW) followedIds.pop();
-      followedIds.unshift('custom');
+    const nameEl = document.getElementById('customName');
+    const name = ((nameEl && nameEl.value) || customName || '').trim();
+    if(!name){
+      if(note) note.textContent = 'Type a program name first.';
+      if(nameEl) nameEl.focus();
+      return;
+    }
+    if(!customWeek) customWeek = defaultCustomWeek();
+    const hasMove = customWeek.some(d=>d && d.type==='train' && (d.exercises||[]).length);
+    if(!hasMove){
+      if(note) note.textContent = 'Add at least one exercise before saving.';
+      return;
+    }
+    customName = name;
+    let rec = editingOwnId ? ownPrograms.find(x=>x.id===editingOwnId) : null;
+    if(!rec){
+      if(ownPrograms.length>=MAX_OWN){
+        if(note) note.textContent = 'You already have 30 saved programs. Delete one first.';
+        return;
+      }
+      rec = { id: 'own-'+Date.now().toString(36), name, startDow: customStartDow, week: customWeek };
+      ownPrograms.unshift(rec);
+      editingOwnId = rec.id;
+    } else {
+      rec.name = name;
+      rec.startDow = customStartDow;
+      rec.week = JSON.parse(JSON.stringify(customWeek));
+    }
+    await persistOwnLibrary();
+    activeProgramId = rec.id;
+    await storeSet('programId', rec.id);
+    if(!followedIds.includes(rec.id)){
+      followedIds.unshift(rec.id);
       await storeSet('followedPlans', JSON.stringify(followedIds));
     }
-    await chooseProgram('custom');
     fillPlanSelect();
+    renderOwnList();
     await renderToday();
-    const note = document.getElementById('builderNote');
-    if(note) note.textContent = (customName||'My Program')+' saved. Open the Train tab — today uses your list.';
+    if(note) note.textContent = '"'+name+'" saved. Open Train to use it.';
+    const title = document.getElementById('createTitle');
+    if(title) title.textContent = 'Edit — '+name;
     showTab('today');
   }catch(e){
-    const note = document.getElementById('builderNote');
     if(note) note.textContent = 'Could not save: '+(e.message||e);
   }
 }
@@ -1686,7 +1857,7 @@ function applyLevel(ex){
 }
 
 async function noteSessionIfComplete(){
-  const plan = WEEK()[viewedDate.getDay()];
+  const plan = todayPlan(viewedDate);
   if(!plan || plan.type!=='train' || !plan.exercises.length) return;
   const ym = monthKeyOf(viewedDate);
   const dd = String(viewedDate.getDate());
@@ -1940,10 +2111,12 @@ async function chooseLevel(id){
 function fillPlanSelect(){
   const sel = document.getElementById('planSelect');
   if(!sel) return;
-  ensureCustomProgram();
-  const ids = (followedIds&&followedIds.length)?followedIds:PROGRAMS.map(p=>p.id);
-  const list = PROGRAMS.filter(p=>ids.includes(p.id) || p.id===activeProgramId || p.id==='custom');
-  sel.innerHTML = list.map(p=>`<option value="${p.id}" ${p.id===activeProgramId?'selected':''}>${p.name}</option>`).join('');
+  syncOwnIntoPrograms();
+  const ids = (followedIds&&followedIds.length)?followedIds:[];
+  const list = PROGRAMS.filter(p=>ids.includes(p.id) || p.id===activeProgramId || isOwnId(p.id));
+  const seen = new Set();
+  const uniq = list.filter(p=>{ if(seen.has(p.id)) return false; seen.add(p.id); return true; });
+  sel.innerHTML = uniq.map(p=>`<option value="${p.id}" ${p.id===activeProgramId?'selected':''}>${p.name}</option>`).join('');
   paintLevelRows();
   const hero = document.getElementById('planHero');
   if(hero){
@@ -1977,7 +2150,7 @@ function showTab(which){
   if(which==='progress'){ renderCalendar(); renderFollowBoard(); }
   if(which==='fuel'){ renderWater(); renderMealLog(); }
   if(which==='plans') renderPlans();
-  if(which==='create') renderBuilder();
+  if(which==='create'){ renderBuilder(); renderOwnList(); }
   if(which==='phone') renderAcct();
 }
 
@@ -1999,7 +2172,7 @@ async function chooseProgram(id){
   await storeSet('programId', id);
   await loadFollowed();
   if(!followedIds.includes(id)){
-    if(followedIds.length<MAX_FOLLOW) followedIds.push(id);
+    followedIds.unshift(id);
     await storeSet('followedPlans', JSON.stringify(followedIds));
   }
   renderPlans();
@@ -2101,7 +2274,7 @@ async function toggleWater(i){
 }
 
 async function renderToday(){
-  const plan = WEEK()[viewedDate.getDay()];
+  const plan = todayPlan(viewedDate);
   const isToday = sameDay(viewedDate, new Date());
   document.getElementById('dowLabel').innerHTML = plan.name + (isToday ? ' <span class="today-pill">TODAY</span>' : '');
   document.getElementById('dateLabel').textContent = viewedDate.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
@@ -2197,7 +2370,7 @@ async function renderCalendar(){
 
   for(let day=1; day<=daysInMonth; day++){
     const d = new Date(year, month, day);
-    const plan = WEEK()[d.getDay()];
+    const plan = todayPlan(d);
     const doneArr = monthData[String(day)] || [];
     const total = plan.exercises.length;
     const isPast = d < new Date(today.getFullYear(),today.getMonth(),today.getDate());
@@ -2233,7 +2406,7 @@ async function computeStreak(){
   while(true){
     const ym = monthKeyOf(cursor);
     if(!cache[ym]) cache[ym] = await getMonthData(ym);
-    const plan = WEEK()[cursor.getDay()];
+    const plan = todayPlan(cursor);
     const doneArr = cache[ym][String(cursor.getDate())] || [];
     const total = plan.exercises.length;
 
@@ -2259,11 +2432,11 @@ function shiftMonth(delta){
 
 (async function boot(){
   try{
-    try{ await loadCustomWeek(); }catch(e){}
+    try{ await loadOwnPrograms(); }catch(e){}
     try{ await loadProgram(); }catch(e){ console.warn(e); }
     try{ await loadFollowed(); }catch(e){}
     try{ await loadSchedule(); }catch(e){}
-    try{ fillPlanSelect(); }catch(e){}
+    try{ fillPlanSelect(); paintStartRows(); }catch(e){}
     try{ renderAcct(); }catch(e){}
     try{ await renderToday(); }catch(e){ console.warn(e); }
     const pi = document.getElementById('picIphone');
