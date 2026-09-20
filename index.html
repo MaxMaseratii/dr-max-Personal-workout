@@ -2363,21 +2363,88 @@ function diagramHtml(ex){
    Example: VIDEO_MAP['Barbell Back Squat'] = { yt:'VIDEO_ID' }
             VIDEO_MAP['Plank'] = { src:'https://cdn.yourdomain.com/plank.mp4' } */
 const VIDEO_MAP = {};
+const VIDEO_BY_HINT = [
+  {re:/single.?arm|one.?arm|dumbbell row|db row/i, yt:'_NjSOXXwBOQ'},
+  {re:/seated cable row|cable row/i, yt:'GZbfZ033f74'},
+  {re:/barbell.*row|t-?bar row|bent.?over row/i, yt:'FWJR5Ve8bnQ'},
+  {re:/lat pulldown|pulldown/i, yt:'CAwf7n6Luuc'},
+  {re:/straight.?arm/i, yt:'ajdFwa-6wDA'},
+  {re:/pull-?up|chin-?up/i, yt:'eGo4IYlbE5g'},
+  {re:/dead hang/i, yt:'tKjSXhsF3OU'},
+  {re:/human flag|flag attempt|tuck flag|straddle flag/i, yt:'lqv6y3vQHpk'},
+  {re:/deadlift(?!.*romanian|.*rdl|.*stiff|.*sumo)/i, yt:'op9kVnSso6Q'},
+  {re:/sumo dead/i, yt:'jK8qj0D0vK8'},
+  {re:/romanian|rdl|stiff.?leg/i, yt:'jEy_czb3RKA'},
+  {re:/good.?morning/i, yt:'5_cq6YKfjsM'},
+  {re:/flat barbell bench|barbell bench/i, yt:'gRVjAtPip0Y'},
+  {re:/dumbbell bench|db bench|flat dumbbell/i, yt:'VmB1G1K7v94'},
+  {re:/incline.*press|incline dumbbell/i, yt:'8iPEnn-ltC8'},
+  {re:/decline/i, yt:'LfyQBUKR8SE'},
+  {re:/chest fly|cable fly|pec deck/i, yt:'Iwe6AmxVf7o'},
+  {re:/knee push|incline push|wall push|push-?up|chaturanga/i, yt:'IODxDxX7oi4'},
+  {re:/military press|overhead press|ohp/i, yt:'qEwKCR5JCog'},
+  {re:/seated.*press|arnold/i, yt:'qEwKCR5JCog'},
+  {re:/lateral raise|side delt|bottle lateral/i, yt:'3VcKaXpzqRo'},
+  {re:/front raise/i, yt:'s99-hWQaKLs'},
+  {re:/upright row/i, yt:'VIoihl5Z58Q'},
+  {re:/face pull|rear delt|pull-?apart/i, yt:'rep-xV4ELiw'},
+  {re:/pike|wall press/i, yt:'qEwKCR5JCog'},
+  {re:/hammer curl/i, yt:'zC3nLlEvin4'},
+  {re:/preacher|concentration|cable curl|bottle curl|barbell curl|incline dumbbell curl/i, yt:'ykJmrZ5v0Oo'},
+  {re:/skullcrush|lying tricep/i, yt:'d_KZxkY_0cM'},
+  {re:/pushdown|rope/i, yt:'vB5OHsJ3EME'},
+  {re:/kickback/i, yt:'6SS6K3lAwZ8'},
+  {re:/chair dip|parallel bar dip|dip/i, yt:'2z8JmcrW-As'},
+  {re:/close.?grip bench/i, yt:'nEF0bv2FW94'},
+  {re:/overhead extension|chair overhead/i, yt:'YrM2a-sAkZA'},
+  {re:/front squat|goblet|hack squat|chair squat|bodyweight squat|back squat|pulse squat/i, yt:'ultWZbUMPL8'},
+  {re:/leg press/i, yt:'IZxyjW7MPJQ'},
+  {re:/bulgarian|split squat/i, yt:'2C-uNgKwPLE'},
+  {re:/sumo squat|pli/i, yt:'0t4_1mA5Kno'},
+  {re:/walking lunge|reverse lunge|curtsy|lunge/i, yt:'QOVaHWM2mHM'},
+  {re:/leg extension/i, yt:'YyvSfViJwp8'},
+  {re:/adductor|inner thigh/i, yt:'Q-Xv39pV4sE'},
+  {re:/step-?up/i, yt:'W1wqNWHFbPM'},
+  {re:/leg curl|glute-ham|ghr/i, yt:'1Tq3QdYUuHs'},
+  {re:/hip thrust|sofa bridge|frog pump|glute bridge/i, yt:'xQdyB9yUbY0'},
+  {re:/pull-?through/i, yt:'ZYBJ4V2Xo7M'},
+  {re:/hip abduction|fire hydrant|donkey kick|clamshell|band walk|monster walk/i, yt:'Nm76V-nF4Pk'},
+  {re:/calf/i, yt:'gwLzBJYoWlI'},
+  {re:/crunch|bicycle|heel tap|hundreds/i, yt:'Xyd_fa5zoEU'},
+  {re:/side plank/i, yt:'K2VljzCC16g'},
+  {re:/plank|mountain.?climber|bird-?dog|dead bug|ab wheel/i, yt:'ASdvN_XkbLY'},
+  {re:/hanging leg|lying leg raise/i, yt:'Pr1ieGZ5atk'},
+  {re:/russian twist|wood chop/i, yt:'wkD8rjkodUI'},
+  {re:/vacuum/i, yt:'44mgUselcDU'},
+  {re:/burpee/i, yt:'TU8QYVW0gDU'},
+  {re:/jumping jack/i, yt:'c4DAnQ6DtF8'},
+  {re:/handstand/i, yt:'tQfr8bTUrYI'},
+  {re:/muscle-?up/i, yt:'Ekr8M3ZaYys'},
+  {re:/front lever/i, yt:'zxgKfZDcSPw'},
+  {re:/planche/i, yt:'C-SML6ZcUoM'},
+  {re:/door-?row|table row|backpack row/i, yt:'_NjSOXXwBOQ'}
+];
 function youtubeSearchUrl(name){
-  const q = encodeURIComponent('"' + name + '" proper form demonstration exercise');
-  return `https://www.youtube.com/results?search_query=${q}`;
+  const q = encodeURIComponent(name + ' proper form demonstration exercise');
+  return 'https://www.youtube.com/results?search_query=' + q;
 }
 function videoRecord(exName){
   const n = String(exName||'');
-  return VIDEO_MAP[n] || VIDEO_MAP[n.toLowerCase()] || null;
+  if(VIDEO_MAP[n] || VIDEO_MAP[n.toLowerCase()]) return VIDEO_MAP[n] || VIDEO_MAP[n.toLowerCase()];
+  const hit = VIDEO_BY_HINT.find(x=>x.re.test(n));
+  return hit ? { yt: hit.yt } : null;
+}
+function ytEmbed(id){
+  return 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?rel=0&modestbranding=1&playsinline=1';
 }
 function openExerciseVideo(name){
   const sheet = document.getElementById('vidSheet');
   const frame = document.getElementById('vidFrame');
   const title = document.getElementById('vidTitle');
   const note = document.getElementById('vidNote');
+  const search = youtubeSearchUrl(name);
   if(!sheet || !frame){
-    window.open(youtubeSearchUrl(name), '_blank', 'noopener');
+    window.open(search, '_blank', 'noopener');
     return;
   }
   title.textContent = name;
@@ -2385,14 +2452,16 @@ function openExerciseVideo(name){
   frame.innerHTML = '';
   if(rec && rec.src){
     frame.innerHTML = `<video controls playsinline autoplay muted src="${rec.src}"></video>`;
-    note.textContent = 'Clip hosted off GitHub Pages (CDN).';
+    note.innerHTML = 'Clip hosted off GitHub Pages.';
   } else if(rec && rec.yt){
-    frame.innerHTML = `<iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(rec.yt)}?rel=0&modestbranding=1"></iframe>`;
-    note.textContent = 'Exact form clip. Nothing stored in the GitHub repo.';
+    frame.innerHTML = `<iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen src="${ytEmbed(rec.yt)}"></iframe>`;
+    note.innerHTML = 'Form demo on YouTube. <a href="'+search+'" target="_blank" rel="noopener">More videos of this move →</a>';
   } else {
-    const q = encodeURIComponent(name + ' proper form demonstration exercise');
-    frame.innerHTML = `<iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://www.youtube-nocookie.com/embed?listType=search&list=${q}"></iframe>`;
-    note.textContent = 'Loaded from YouTube search — no video files on GitHub Pages.';
+    frame.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#E9EDF6">
+      <div><p style="margin:0 0 12px">YouTube no longer allows a search box inside the app.</p>
+      <a class="use-btn" href="${search}" target="_blank" rel="noopener">Open ${name} on YouTube</a></div></div>`;
+    note.textContent = 'Opens YouTube for this exact exercise name.';
+    window.open(search, '_blank', 'noopener');
   }
   sheet.classList.add('on');
 }
