@@ -2341,8 +2341,9 @@ function homeHowTo(ex){
 function diagramHtml(ex){
   const src = photoFitsMove(ex) ? exImg(ex) : '';
   const safe = String(ex.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const key = String(ex.img||'').replace(/'/g,'');
   const poster = src
-    ? `<div class="poster-wrap" onclick="event.stopPropagation();openExerciseVideo('${safe}')"><img src="${src}" alt="${ex.name}"><button type="button" class="play-fab" aria-label="Play form video">▶</button></div>`
+    ? `<div class="poster-wrap" onclick="event.stopPropagation();openExerciseVideo('${safe}','${key}')"><img src="${src}" alt="${ex.name}"><button type="button" class="play-fab" aria-label="Play form video">▶</button></div>`
     : '';
   if(src){
     const homeNote = isHomeMove(ex) ? `<div class="cue-text">Home kit version — chair, bottles, floor, bag or pole. No barbell required.</div>` : '';
@@ -2350,7 +2351,7 @@ function diagramHtml(ex){
   }
   if(isHomeMove(ex)){
     const h = homeHowTo(ex);
-    return `<div class="ex-fallback" onclick="event.stopPropagation();openExerciseVideo('${safe}')">
+    return `<div class="ex-fallback" onclick="event.stopPropagation();openExerciseVideo('${safe}','${String(ex.img||'').replace(/'/g,'')}')">
       <div class="ex-panel"><b>START · HOME</b><div class="hint">${h.start}</div></div>
       <div class="ex-panel"><b>FINISH · HOME</b><div class="hint">${h.fin}</div></div>
     </div>
@@ -2437,31 +2438,38 @@ function videoRecord(exName){
 function ytEmbed(id){
   return 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?rel=0&modestbranding=1&playsinline=1';
 }
-function openExerciseVideo(name){
+function nativeVideoSrc(name, imgKey){
+  const rec = videoRecord(name);
+  if(rec && rec.src) return rec.src;
+  const key = String(imgKey||'').trim();
+  if(key) return 'videos/' + key + '.mp4';
+  const slug = String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return slug ? 'videos/' + slug + '.mp4' : '';
+}
+function openExerciseVideo(name, imgKey){
   const sheet = document.getElementById('vidSheet');
   const frame = document.getElementById('vidFrame');
   const title = document.getElementById('vidTitle');
   const note = document.getElementById('vidNote');
-  const search = youtubeSearchUrl(name);
-  if(!sheet || !frame){
-    window.open(search, '_blank', 'noopener');
-    return;
-  }
+  if(!sheet || !frame) return;
   title.textContent = name;
-  const rec = videoRecord(name);
-  frame.innerHTML = '';
-  if(rec && rec.src){
-    frame.innerHTML = `<video controls playsinline autoplay muted src="${rec.src}"></video>`;
-    note.innerHTML = 'Clip hosted off GitHub Pages.';
-  } else if(rec && rec.yt){
-    frame.innerHTML = `<iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen src="${ytEmbed(rec.yt)}"></iframe>`;
-    note.innerHTML = 'Form demo on YouTube. <a href="'+search+'" target="_blank" rel="noopener">More videos of this move →</a>';
-  } else {
-    frame.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#E9EDF6">
-      <div><p style="margin:0 0 12px">YouTube no longer allows a search box inside the app.</p>
-      <a class="use-btn" href="${search}" target="_blank" rel="noopener">Open ${name} on YouTube</a></div></div>`;
-    note.textContent = 'Opens YouTube for this exact exercise name.';
-    window.open(search, '_blank', 'noopener');
+  const src = nativeVideoSrc(name, imgKey);
+  const poster = (window.EX_IMAGES && imgKey && window.EX_IMAGES[imgKey]) ? window.EX_IMAGES[imgKey] : '';
+  frame.innerHTML = `<video id="nativeExVid" controls playsinline autoplay muted loop poster="${poster||''}" src="${src}"></video>`;
+  const vid = document.getElementById('nativeExVid');
+  note.textContent = 'Your club clip — file ' + src;
+  if(vid){
+    vid.addEventListener('error', function(){
+      frame.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;color:#E9EDF6">
+        <div>
+          <p style="margin:0 0 8px;font-weight:700">Native clip not in the repo yet</p>
+          <p style="margin:0 0 10px;color:#8FA1C4;font-size:13px">Export your 3D form video as MP4 and upload it as:</p>
+          <code style="color:#F2B705">${src}</code>
+          <p style="margin:10px 0 0;color:#8FA1C4;font-size:12px">Keep each file under ~2 MB (480p, muted, 6–10 seconds) so GitHub Pages stays fast.</p>
+        </div>
+      </div>`;
+      note.textContent = 'Drop that MP4 next to index.html in the videos folder, then push.';
+    });
   }
   sheet.classList.add('on');
 }
@@ -2808,7 +2816,7 @@ async function renderToday(){
         <span>Rest ${ex.rest}</span>
         <span>${ex.weight}</span>
       </div>
-      <button type="button" class="watch-btn" onclick="event.stopPropagation();openExerciseVideo('${ex.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">Watch form video ▶</button>`;
+      <button type="button" class="watch-btn" onclick="event.stopPropagation();openExerciseVideo('${ex.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}','${String(ex.img||'').replace(/'/g,'')}')">Watch form video ▶</button>`;
     card.addEventListener('click', (ev)=>{
       if(ev.target && (ev.target.tagName==='A' || ev.target.tagName==='INPUT')) return;
       const box = card.querySelector('input[type=checkbox]');
