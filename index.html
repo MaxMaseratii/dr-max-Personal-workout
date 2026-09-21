@@ -119,7 +119,7 @@
     background:#121212;border-radius:10px;padding:0;margin-bottom:10px;
     display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
-  .ex-diagram img{max-width:100%;max-height:320px;width:100%;height:auto;display:block;border-radius:6px;object-fit:contain;background:#121212;}
+  .ex-diagram img{max-width:100%;max-height:72vh;width:100%;height:auto;display:block;border-radius:6px;object-fit:contain;background:#121212;}
 
   .cue-text{
     font-size:13px;color:var(--text);line-height:1.45;margin-bottom:10px;
@@ -137,8 +137,15 @@
 
   .watch-btn{display:inline-block;font-size:11.5px;font-weight:700;color:#ff4d4d;text-decoration:none;background:none;border:0;padding:0;font:inherit;cursor:pointer;}
   .watch-btn:active{opacity:.7;}
-  .poster-wrap{position:relative;width:100%;background:#121212;cursor:pointer;}
-  .poster-wrap img{width:100%;max-height:320px;object-fit:contain;display:block;}
+  .poster-wrap{position:relative;width:100%;background:#121212;cursor:pointer;line-height:0;}
+  .poster-wrap img,.poster-wrap video{
+    width:100%;height:auto;max-height:none;display:block;background:#121212;object-fit:contain;
+  }
+  .poster-wrap.playing{overflow:hidden;}
+  .poster-wrap.playing video{
+    position:absolute;left:0;top:0;width:100%;height:100%;
+    object-fit:contain;background:#121212;
+  }
   .play-fab{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;
@@ -146,16 +153,24 @@
     box-shadow:0 6px 20px rgba(0,0,0,.45);
   }
   .vid-sheet{
-    display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:80;
-    align-items:center;justify-content:center;padding:16px;
+    display:none;position:fixed;inset:0;background:rgba(8,8,8,.94);z-index:80;
+    align-items:center;justify-content:center;padding:0;
   }
   .vid-sheet.on{display:flex;}
-  .vid-box{width:min(920px,100%);background:#0E0E12;border:1px solid var(--card-border);border-radius:14px;overflow:hidden;}
-  .vid-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;color:var(--text);font-weight:700;}
-  .vid-bar button{background:transparent;border:0;color:var(--text);font-size:22px;cursor:pointer;}
-  .vid-frame{position:relative;padding-top:56.25%;background:#000;}
-  .vid-frame iframe,.vid-frame video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;}
-  .vid-note{padding:8px 12px 12px;font-size:12px;color:var(--text-dim);}
+  .vid-box{width:min(880px,100vw);height:min(92vh,100%);background:#121212;border:0;border-radius:0;overflow:hidden;display:flex;flex-direction:column;}
+  .vid-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;color:#E9EDF6;font-weight:700;font-size:15px;background:#121212;}
+  .vid-bar button{background:transparent;border:0;color:#E9EDF6;font-size:28px;line-height:1;cursor:pointer;padding:4px 8px;}
+  .vid-frame{position:relative;flex:1;min-height:0;background:#121212;}
+  .vid-frame iframe,.vid-frame video{
+    position:absolute;inset:0;width:100%;height:100%;border:0;background:#121212;
+    object-fit:contain;
+  }
+  .vid-note{display:none;}
+  .poster-wrap video{
+    width:100%;height:auto;max-height:none;min-height:280px;max-height:72vh;
+    object-fit:contain;display:block;background:#121212;
+  }
+  .poster-wrap img{width:100%;max-height:72vh;object-fit:contain;display:block;background:#121212;}
 
   /* Progress / calendar tab */
   .streak-card{
@@ -2481,31 +2496,41 @@ function nativeVideoSrc(name, imgKey){
   return slug ? 'videos/' + slug + '.mp4' : '';
 }
 function openExerciseVideo(name, imgKey){
-  const sheet = document.getElementById('vidSheet');
-  const frame = document.getElementById('vidFrame');
-  const title = document.getElementById('vidTitle');
-  const note = document.getElementById('vidNote');
-  if(!sheet || !frame) return;
-  title.textContent = name;
   const src = nativeVideoSrc(name, imgKey);
   const poster = (window.EX_IMAGES && imgKey && window.EX_IMAGES[imgKey]) ? window.EX_IMAGES[imgKey] : '';
-  frame.innerHTML = `<video id="nativeExVid" controls playsinline autoplay muted loop poster="${poster||''}" src="${src}"></video>`;
-  const vid = document.getElementById('nativeExVid');
-  note.textContent = 'Start-to-finish form loop — tap play if it is paused.';
-  if(vid){
-    vid.addEventListener('error', function(){
-      frame.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;color:#E9EDF6">
-        <div>
-          <p style="margin:0 0 8px;font-weight:700">Native clip not in the repo yet</p>
-          <p style="margin:0 0 10px;color:#8FA1C4;font-size:13px">Export your 3D form video as MP4 and upload it as:</p>
-          <code style="color:#F2B705">${src}</code>
-          <p style="margin:10px 0 0;color:#8FA1C4;font-size:12px">If this clip is missing, upload videos/<key>.mp4 next to index.html and push.</p>
-        </div>
-      </div>`;
-      note.textContent = 'Drop that MP4 next to index.html in the videos folder, then push.';
-    });
+  document.querySelectorAll('.poster-wrap.playing').forEach(resetPosterWrap);
+  const wraps = Array.from(document.querySelectorAll('.poster-wrap'));
+  const hit = wraps.find(w=>{
+    const img=w.querySelector('img');
+    if(!img) return false;
+    const oc=w.getAttribute('onclick')||'';
+    return img.alt===name || oc.indexOf("'"+String(imgKey||'')+"'")>=0 || oc.indexOf(String(name||''))>=0;
+  }) || wraps[0];
+  if(!hit){ return; }
+  const box = hit.getBoundingClientRect();
+  const img = hit.querySelector('img');
+  const iw = Math.round(box.width);
+  const ih = Math.round((img && img.getBoundingClientRect().height) || box.height);
+  hit.style.width = iw + 'px';
+  hit.style.height = ih + 'px';
+  hit.classList.add('playing');
+  hit.setAttribute('data-poster', (img && img.src) || poster || '');
+  hit.setAttribute('data-alt', name);
+  hit.innerHTML = '<video playsinline autoplay muted loop webkit-playsinline src="'+src+'" poster="'+(poster||'')+'" style="width:'+iw+'px;height:'+ih+'px;object-fit:contain;background:#121212"></video>';
+  const v = hit.querySelector('video');
+  if(v){
+    v.setAttribute('width', iw);
+    v.setAttribute('height', ih);
+    v.addEventListener('click', function(ev){ ev.stopPropagation(); if(v.paused) v.play(); else v.pause(); });
   }
-  sheet.classList.add('on');
+}
+function resetPosterWrap(w){
+  const src = w.getAttribute('data-poster')||'';
+  const alt = w.getAttribute('data-alt')||'';
+  w.classList.remove('playing');
+  w.style.height = '';
+  w.style.width = '';
+  w.innerHTML = (src?('<img src="'+src+'" alt="'+alt+'">'):'') + '<button type="button" class="play-fab" aria-label="Play form video">▶</button>';
 }
 function closeExerciseVideo(){
   const sheet = document.getElementById('vidSheet');
