@@ -117,9 +117,8 @@
 
   .ex-diagram{
     background:#121212;border-radius:10px;padding:0;margin-bottom:10px;
-    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    overflow:hidden;
   }
-  .ex-diagram img{max-width:100%;max-height:72vh;width:100%;height:auto;display:block;border-radius:6px;object-fit:contain;background:#121212;}
 
   .cue-text{
     font-size:13px;color:var(--text);line-height:1.45;margin-bottom:10px;
@@ -137,16 +136,19 @@
 
   .watch-btn{display:inline-block;font-size:11.5px;font-weight:700;color:#ff4d4d;text-decoration:none;background:none;border:0;padding:0;font:inherit;cursor:pointer;}
   .watch-btn:active{opacity:.7;}
-  .poster-wrap{position:relative;width:100%;background:#121212;cursor:pointer;line-height:0;overflow:hidden;}
-  .poster-wrap img{
-    width:100%;height:auto;display:block;background:#121212;object-fit:contain;
+  .ex-diagram{background:#121212;border-radius:10px;padding:0;margin-bottom:10px;overflow:hidden;}
+  .stage{
+    position:relative;width:100%;aspect-ratio:16/9;background:#121212;cursor:pointer;
   }
-    .poster-wrap video.form-vid{
-    position:absolute;left:0;top:0;width:100%;height:100%;
-    object-fit:contain;object-position:center center;background:#121212;display:none;
+  .stage img,.stage video{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:contain;object-position:center center;background:#121212;display:block;
   }
-  .poster-wrap.playing video.form-vid{display:block;}
-  .poster-wrap.playing .play-fab{display:none;}
+  .stage video{opacity:0;pointer-events:none;}
+  .stage.is-on video{opacity:1;pointer-events:auto;}
+  .stage.is-on img{opacity:0;}
+  .stage.is-on .play-fab{display:none;}
+  .play-fab{display:none;}
   .play-fab{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;
@@ -167,11 +169,6 @@
     object-fit:contain;
   }
   .vid-note{display:none;}
-  .poster-wrap video{
-    width:100%;height:auto;max-height:none;min-height:280px;max-height:72vh;
-    object-fit:contain;display:block;background:#121212;
-  }
-  .poster-wrap img{width:100%;max-height:72vh;object-fit:contain;display:block;background:#121212;}
 
   /* Progress / calendar tab */
   .streak-card{
@@ -2372,16 +2369,64 @@ function homeHowTo(ex){
   if(/bridge|hip thrust|kickback/.test(n)) return {eq:'Floor or sofa edge — no barbell hip thrust', start:'Shoulders on floor or sofa, feet planted', fin:'Drive hips up and squeeze, then lower.'};
   return {eq:'Home kit only — chair, bottles, floor or a bag', start:'Set your stance', fin:'Move with control, then return.'};
 }
+function clipForExercise(name, imgKey){
+  const n = String(name||'').toLowerCase();
+  const rules = [
+    [/pull-?up|chin-?up/, 'mon2'],
+    [/straight-arm/, 'mon4'],
+    [/lat pulldown|wide-grip lat/, 'mon1'],
+    [/face.?pull/, 'mon5'],
+    [/single-arm.*row|dumbbell row|bag row/, 'mon3'],
+    [/t-?bar row|barbell \/ t-bar|barbell row/, 'fri1'],
+    [/seated cable row|band or cable row/, 'fri2'],
+    [/incline.*curl/, 'fri5'],
+    [/barbell curl|hammer|preacher|concentration/, 'fri4'],
+    [/overhead press|seated dumbbell overhead|pike/, 'tue1'],
+    [/cable lateral/, 'tue2'],
+    [/lateral raise/, 'tue2'],
+    [/rear delt/, 'tue4'],
+    [/hanging leg/, 'tue6'],
+    [/lying leg raise|dead bug/, 'tue6'],
+    [/side plank/, 'tue7'],
+    [/\bplank\b/, 'tue5'],
+    [/flat dumbbell bench|bench press/, 'sat1'],
+    [/incline dumbbell press|incline press/, 'sat2'],
+    [/chest fly|cable chest/, 'sat3'],
+    [/rope pushdown|tricep.*pushdown/, 'sat4'],
+    [/overhead tricep/, 'sat5'],
+    [/back squat|chair squat|bodyweight squat/, 'wed1'],
+    [/romanian|hip hinge|good-?morning/, 'wed2'],
+    [/walking lunge|split squat|step-up|bulgarian/, 'wed4'],
+    [/calf raise/, 'm_stand_calf'],
+    [/hip thrust|glute bridge/, 'w_hip'],
+    [/human flag|full flag/, 'm_full_flag'],
+    [/dead hang/, 'm_deadhang'],
+    [/chair.*dip|parallel bar dip|\bdips\b/, 'm_chair_dip'],
+    [/incline push/, 'm_incline_push'],
+    [/knee push/, 'm_knee_push'],
+    [/wall push/, 'm_wall_push'],
+    [/\bpush-?up/, 'bank_pushup'],
+    [/deadlift/, 'bank_deadlift'],
+    [/skull|lying.*tricep|nosebreaker/, 'bank_skull'],
+    [/military|overhead.*bar/, 'bank_military']
+  ];
+  for(const [re,file] of rules){
+    if(re.test(n)) return 'videos/' + file + '.mp4';
+  }
+  let key = String(imgKey||'').trim();
+  if(VIDEO_FILE[key]) key = VIDEO_FILE[key];
+  if(key) return 'videos/' + key + '.mp4';
+  return '';
+}
 function diagramHtml(ex){
   const src = photoFitsMove(ex) ? exImg(ex) : '';
   const safe = String(ex.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const key = String(ex.img||'').replace(/'/g,'');
-  const poster = src
-    ? `<div class="poster-wrap" onclick="event.stopPropagation();openExerciseVideo('${safe}','${key}')"><img src="${src}" alt="${ex.name}"><button type="button" class="play-fab" aria-label="Play form video">▶</button></div>`
-    : '';
+  const clip = clipForExercise(ex.name, key);
   if(src){
     const homeNote = isHomeMove(ex) ? `<div class="cue-text">Home kit version — chair, bottles, floor, bag or pole. No barbell required.</div>` : '';
-    return `<div class="ex-diagram">${poster}</div>${homeNote}`;
+    const btn = clip ? `<button type="button" class="play-fab" aria-label="Play form video">▶</button>` : '';
+    return `<div class="ex-diagram"><div class="stage" data-clip="${clip}" onclick="event.stopPropagation();playStage(this)"><img src="${src}" alt="${ex.name}"><video playsinline muted loop preload="none"></video>${btn}</div></div>${homeNote}`;
   }
   if(isHomeMove(ex)){
     const h = homeHowTo(ex);
@@ -2502,45 +2547,31 @@ function nativeVideoSrc(name, imgKey){
   const slug = String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   return slug ? 'videos/' + slug + '.mp4' : '';
 }
-function openExerciseVideo(name, imgKey){
-  const src = nativeVideoSrc(name, imgKey);
-  document.querySelectorAll('.poster-wrap.playing').forEach(function(w){
-    w.classList.remove('playing');
-    const vid=w.querySelector('video.form-vid');
-    if(vid){ vid.pause(); vid.remove(); }
+function playStage(stage){
+  if(!stage) return;
+  const clip = stage.getAttribute('data-clip')||'';
+  document.querySelectorAll('.stage.is-on').forEach(function(s){
+    if(s===stage) return;
+    s.classList.remove('is-on');
+    const ov=s.querySelector('video');
+    if(ov){ ov.pause(); ov.removeAttribute('src'); ov.load(); }
   });
-  const wraps = Array.from(document.querySelectorAll('.poster-wrap'));
-  const hit = wraps.find(function(w){
-    const img=w.querySelector('img');
-    if(!img) return false;
-    const oc=w.getAttribute('onclick')||'';
-    return img.alt===name || oc.indexOf("'"+String(imgKey||'')+"'")>=0;
-  });
-  if(!hit) return;
-  const img = hit.querySelector('img');
-  if(!img) return;
-  let v = hit.querySelector('video.form-vid');
-  if(!v){
-    v = document.createElement('video');
-    v.className = 'form-vid';
-    v.setAttribute('playsinline','');
-    v.setAttribute('webkit-playsinline','');
-    v.muted = true;
-    v.loop = true;
-    v.autoplay = true;
-    v.preload = 'auto';
-    v.controls = false;
-    hit.appendChild(v);
-    v.addEventListener('click', function(ev){
-      ev.stopPropagation();
-      if(v.paused) v.play(); else v.pause();
-    });
+  const v = stage.querySelector('video');
+  if(!v || !clip) return;
+  if(stage.classList.contains('is-on')){
+    if(v.paused) v.play(); else v.pause();
+    return;
   }
-  v.poster = img.src;
-  v.src = src;
-  hit.classList.add('playing');
-  const play = function(){ v.play().catch(function(){}); };
-  if(v.readyState>=2) play(); else v.addEventListener('canplay', play, {once:true});
+  v.src = clip;
+  stage.classList.add('is-on');
+  v.play().catch(function(){});
+}
+function openExerciseVideo(name, imgKey){
+  const stage = document.querySelector('.stage');
+  if(stage){
+    stage.setAttribute('data-clip', clipForExercise(name, imgKey));
+    playStage(stage);
+  }
 }
 function closeExerciseVideo(){
   const sheet = document.getElementById('vidSheet');
