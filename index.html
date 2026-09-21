@@ -137,13 +137,13 @@
 
   .watch-btn{display:inline-block;font-size:11.5px;font-weight:700;color:#ff4d4d;text-decoration:none;background:none;border:0;padding:0;font:inherit;cursor:pointer;}
   .watch-btn:active{opacity:.7;}
-  .poster-wrap{position:relative;width:100%;background:#121212;cursor:pointer;line-height:0;}
+  .poster-wrap{position:relative;width:100%;background:#121212;cursor:pointer;line-height:0;overflow:hidden;}
   .poster-wrap img{
     width:100%;height:auto;display:block;background:#121212;object-fit:contain;
   }
-  .poster-wrap video.form-vid{
+    .poster-wrap video.form-vid{
     position:absolute;left:0;top:0;width:100%;height:100%;
-    object-fit:cover;background:#121212;display:none;
+    object-fit:contain;object-position:center center;background:#121212;display:none;
   }
   .poster-wrap.playing video.form-vid{display:block;}
   .poster-wrap.playing .play-fab{display:none;}
