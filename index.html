@@ -138,14 +138,15 @@
   .watch-btn{display:inline-block;font-size:11.5px;font-weight:700;color:#ff4d4d;text-decoration:none;background:none;border:0;padding:0;font:inherit;cursor:pointer;}
   .watch-btn:active{opacity:.7;}
   .poster-wrap{position:relative;width:100%;background:#121212;cursor:pointer;line-height:0;}
-  .poster-wrap img,.poster-wrap video{
-    width:100%;height:auto;max-height:none;display:block;background:#121212;object-fit:contain;
+  .poster-wrap img{
+    width:100%;height:auto;display:block;background:#121212;object-fit:contain;
   }
-  .poster-wrap.playing{overflow:hidden;}
-  .poster-wrap.playing video{
+  .poster-wrap video.form-vid{
     position:absolute;left:0;top:0;width:100%;height:100%;
-    object-fit:contain;background:#121212;
+    object-fit:cover;background:#121212;display:none;
   }
+  .poster-wrap.playing video.form-vid{display:block;}
+  .poster-wrap.playing .play-fab{display:none;}
   .play-fab{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;
@@ -1034,7 +1035,7 @@ let PROGRAMS = [
       { title:'Park / Active Recovery', type:'train', exercises:[
         E('thu1','Pull-Ups',4,'max','90s','Bodyweight','Hang from the bar, pull your chin above it, lower back down slow.',['Lats','Biceps']),
         E('thu2','Parallel Bar Dips',3,'10-12','90s','Bodyweight','Hold yourself up on the bars, lower until elbows bend 90 degrees, push back up.',['Chest','Triceps']),
-        E('thu3','Hanging Leg Raise',3,'12-15','60s','Bodyweight','Hang from the bar, lift your legs up straight in front of you, lower slow.',['Lower Abs']),
+        E('tue6','Hanging Leg Raise',3,'12-15','60s','Bodyweight','Hang from the bar, lift your legs up straight in front of you, lower slow.',['Lower Abs']),
         E('thu4','Incline Push-Ups',3,'15','60s','Bodyweight','Hands on a bench or rail, lower your chest to it, push back up.',['Chest','Triceps']),
         E('thu5','Plank',3,'45-60s','45s','Bodyweight','Hold your body straight like a plank of wood, resting on forearms and toes.',['Abs']),
       ]},
@@ -1440,7 +1441,7 @@ let PROGRAMS = [
     week:[
       { title:'Hang + grip', type:'train', exercises:[
         E('m_deadhang','Dead hang on a bar or pole',4,'20-40s','60s','Bodyweight','Hands stacked or close. Shoulders packed. Breathe. This is the flag grip.',['Lats','Grip']),
-        E('mon3','Vertical pole hug / climb hold',3,'20s','60s','Bodyweight','Hug a pole or doorframe edge. Pull the body into the post.',['Lats','Core']),
+        E('bank_flag','Vertical pole hug / climb hold',3,'20s','60s','Bodyweight','Hug a pole or doorframe edge. Pull the body into the post.',['Lats','Core']),
         E('tue7','Side Plank',4,'25s/side','30s','Bodyweight','The flag is a side plank in the air. Keep a long line.',['Obliques']),
         E('mon6','Standing Stomach Vacuum',3,'20s hold','20s','Bodyweight','Brace the waist before every hang.',['Deep Abs']),
       ]},
@@ -2345,7 +2346,13 @@ function isHomeMove(ex){
 }
 function photoFitsMove(ex){
   const n = (ex && ex.name || '').toLowerCase();
-  if(/stretch|fold|cat-cow|cobra|open book|child.?s pose|walk \+|easy 20/.test(n)) return false;
+  const k = String(ex && ex.img || '').toLowerCase();
+  if(/stretch|fold|cat-cow|cobra|open book|child.?s pose|walk \+|easy 20|vacuum|pole hug|climb hold|world.?s greatest|couch stretch|forward fold/.test(n)) return false;
+  if(/hanging leg/.test(n) && /thu3|dip|chair/.test(k)) return false;
+  if(/plank/.test(n) && /sat4|pushdown|skull/.test(k)) return false;
+  if(/pull-?up/.test(n) && /push/.test(k)) return false;
+  if(/kickback/.test(n) && /calf|wed5/.test(k)) return false;
+  if(/doorway/.test(n)) return false;
   return !!exImg(ex);
 }
 function homeHowTo(ex){
@@ -2497,40 +2504,43 @@ function nativeVideoSrc(name, imgKey){
 }
 function openExerciseVideo(name, imgKey){
   const src = nativeVideoSrc(name, imgKey);
-  const poster = (window.EX_IMAGES && imgKey && window.EX_IMAGES[imgKey]) ? window.EX_IMAGES[imgKey] : '';
-  document.querySelectorAll('.poster-wrap.playing').forEach(resetPosterWrap);
+  document.querySelectorAll('.poster-wrap.playing').forEach(function(w){
+    w.classList.remove('playing');
+    const vid=w.querySelector('video.form-vid');
+    if(vid){ vid.pause(); vid.remove(); }
+  });
   const wraps = Array.from(document.querySelectorAll('.poster-wrap'));
-  const hit = wraps.find(w=>{
+  const hit = wraps.find(function(w){
     const img=w.querySelector('img');
     if(!img) return false;
     const oc=w.getAttribute('onclick')||'';
-    return img.alt===name || oc.indexOf("'"+String(imgKey||'')+"'")>=0 || oc.indexOf(String(name||''))>=0;
-  }) || wraps[0];
-  if(!hit){ return; }
-  const box = hit.getBoundingClientRect();
+    return img.alt===name || oc.indexOf("'"+String(imgKey||'')+"'")>=0;
+  });
+  if(!hit) return;
   const img = hit.querySelector('img');
-  const iw = Math.round(box.width);
-  const ih = Math.round((img && img.getBoundingClientRect().height) || box.height);
-  hit.style.width = iw + 'px';
-  hit.style.height = ih + 'px';
-  hit.classList.add('playing');
-  hit.setAttribute('data-poster', (img && img.src) || poster || '');
-  hit.setAttribute('data-alt', name);
-  hit.innerHTML = '<video playsinline autoplay muted loop webkit-playsinline src="'+src+'" poster="'+(poster||'')+'" style="width:'+iw+'px;height:'+ih+'px;object-fit:contain;background:#121212"></video>';
-  const v = hit.querySelector('video');
-  if(v){
-    v.setAttribute('width', iw);
-    v.setAttribute('height', ih);
-    v.addEventListener('click', function(ev){ ev.stopPropagation(); if(v.paused) v.play(); else v.pause(); });
+  if(!img) return;
+  let v = hit.querySelector('video.form-vid');
+  if(!v){
+    v = document.createElement('video');
+    v.className = 'form-vid';
+    v.setAttribute('playsinline','');
+    v.setAttribute('webkit-playsinline','');
+    v.muted = true;
+    v.loop = true;
+    v.autoplay = true;
+    v.preload = 'auto';
+    v.controls = false;
+    hit.appendChild(v);
+    v.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      if(v.paused) v.play(); else v.pause();
+    });
   }
-}
-function resetPosterWrap(w){
-  const src = w.getAttribute('data-poster')||'';
-  const alt = w.getAttribute('data-alt')||'';
-  w.classList.remove('playing');
-  w.style.height = '';
-  w.style.width = '';
-  w.innerHTML = (src?('<img src="'+src+'" alt="'+alt+'">'):'') + '<button type="button" class="play-fab" aria-label="Play form video">▶</button>';
+  v.poster = img.src;
+  v.src = src;
+  hit.classList.add('playing');
+  const play = function(){ v.play().catch(function(){}); };
+  if(v.readyState>=2) play(); else v.addEventListener('canplay', play, {once:true});
 }
 function closeExerciseVideo(){
   const sheet = document.getElementById('vidSheet');
