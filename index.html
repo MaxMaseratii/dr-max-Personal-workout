@@ -2,53 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dr Max Work-Out Club</title>
-<meta name="theme-color" content="#0A0A0C">
+<meta name="theme-color" content="#EDF0F5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="DMWC">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
 <style>
   :root{
-    --bg:#0B1220;
-    --bg-elev:#0F1830;
-    --card:#141F38;
-    --card-border:#243252;
-    --text:#E9EDF6;
-    --text-dim:#8FA1C4;
-    --accent:#F2B705;
-    --accent-dim:#a9840e;
-    --steel:#3E7CB8;
-    --good:#3FA857;
-    --warn:#E0A339;
-    --off:#3A465F;
-    --rest:#5C6B8A;
-    --radius:14px;
+    --mist:#EDF0F5;
+    --paper:#FFFFFF;
+    --ink:#13233F;
+    --ink-2:#2A3A5A;
+    --dim:#5E6A82;
+    --line:#DCE1EA;
+    --copper:#B8702A;
+    --copper-deep:#8F5418;
+    --green:#2F7A45;
+    --amber:#D39A2C;
+    --water:#3C79B8;
+    --bg:var(--mist);
+    --bg-elev:#F5F7FA;
+    --card:var(--paper);
+    --card-border:var(--line);
+    --text:var(--ink);
+    --text-dim:var(--dim);
+    --accent:var(--copper);
+    --accent-dim:var(--copper-deep);
+    --steel:var(--water);
+    --good:var(--green);
+    --warn:var(--amber);
+    --off:#C9D0DC;
+    --rest:#AEB7C7;
+    --radius:18px;
+    --serif:"Bodoni Moda",Didot,"Bodoni 72",Georgia,serif;
+    --sans:"Schibsted Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(19,35,63,.05),0 8px 24px -12px rgba(19,35,63,.12);
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--mist);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;line-height:1.5;
     -webkit-font-smoothing:antialiased;
-    padding-bottom:60px;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
   }
   .wrap{max-width:720px;margin:0 auto;padding:20px 16px 0;}
 
   header.top{padding:6px 0 18px;}
   header.top h1{
-    font-size:26px;font-weight:800;letter-spacing:-0.02em;margin:0 0 4px;
-    background:linear-gradient(90deg,var(--accent),#ffe08a);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-family:var(--serif);font-size:27px;font-weight:700;letter-spacing:-0.01em;margin:0 0 4px;
+    color:var(--ink);
   }
   header.top p{margin:0;color:var(--text-dim);font-size:14px;}
 
@@ -152,7 +167,7 @@
   .play-fab{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;
-    background:rgba(242,183,5,.92);color:#1a1204;font-size:22px;font-weight:800;
+    background:rgba(184,112,42,.94);color:#fff;font-size:22px;font-weight:800;
     box-shadow:0 6px 20px rgba(0,0,0,.45);
   }
   .vid-sheet{
@@ -309,24 +324,10 @@
 
 
 
-  :root{
-    --bg:#0A0A0C;
-    --bg-elev:#121216;
-    --card:#16161B;
-    --card-border:rgba(255,255,255,.08);
-    --text:#F4F1EA;
-    --text-dim:#9A958A;
-    --accent:#D4A017;
-    --accent-dim:#8A6A10;
-    --steel:#6E8AA8;
-    --good:#3FA857;
-    --radius:16px;
-  }
+  /* brand tokens live in the first :root — do not override */
   body{
-    font-family:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    background:
-      radial-gradient(900px 420px at 50% -80px, rgba(212,160,23,.16), transparent 55%),
-      var(--bg);
+    font-family:var(--sans);
+    background:var(--mist);
   }
   .wrap{max-width:760px;padding:18px 16px 40px;}
   header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:4px 0 14px;}
@@ -339,7 +340,7 @@
   }
   .mark img{width:100%;height:100%;object-fit:cover;display:block;}
   header.top h1{
-    font-family:"Fraunces",Georgia,serif;font-size:26px;font-weight:600;
+    font-family:var(--serif);font-size:26px;font-weight:600;
     letter-spacing:-.03em;margin:0;background:none;-webkit-background-clip:unset;color:var(--text);
   }
   header.top .club{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-top:2px;}
@@ -495,7 +496,7 @@
     position:sticky;top:0;z-index:50;
     margin-left:-16px;margin-right:-16px;padding:6px 8px;
     border-radius:0;border-left:0;border-right:0;
-    background:#0B1220;
+    background:var(--paper);
   }
   @media (max-width:640px){
     header.top{padding:4px 0 8px;}
@@ -523,7 +524,23 @@
   .bank-ph{height:88px;border-radius:8px;background:#18233f;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-align:center;padding:6px;}
   .lang-row{display:flex;gap:6px;margin:8px 0 0;flex-wrap:wrap;}
   .lang-btn{background:var(--bg-elev);border:1px solid var(--card-border);color:var(--text-dim);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;}
-  .lang-btn.on{background:var(--accent);color:#1a1204;border-color:var(--accent);}
+  .lang-btn.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+
+  .ex-card,.session-card,.path-bar,.prog-card,.follow-card{
+    box-shadow:var(--shadow);
+  }
+  .ex-name{font-family:var(--serif);font-weight:600;}
+  .watch-btn{color:var(--copper-deep);}
+  .play-fab{background:rgba(184,112,42,.94);color:#fff;}
+  @media (max-width:760px){
+    .tabs{
+      position:fixed;left:0;right:0;bottom:0;margin:0;z-index:50;
+      background:rgba(255,255,255,.94);
+      border-top:1px solid var(--line);
+      padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
+    }
+  }
 
 </style>
 </head>

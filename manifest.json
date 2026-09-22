@@ -3,8 +3,8 @@
   "short_name": "DMWC",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0A0C",
-  "theme_color": "#0A0A0C",
+  "background_color": "#EDF0F5",
+  "theme_color": "#13233F",
   "icons": [
     { "src": "favicon-64.png", "sizes": "64x64", "type": "image/png" },
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
