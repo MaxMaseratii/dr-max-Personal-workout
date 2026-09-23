@@ -6,6 +6,7 @@ window.uiLang = (function(){
 })();
 window.I18N = {
   en:{
+    goodMorning:'Good morning', goodAfternoon:'Good afternoon', goodEvening:'Good evening', sets:'sets', reps:'reps', restLbl:'rest', load:'load', markDone:'Mark done', completed:'Completed', recoverLine:'Recovery is part of the plan. Walk, stretch, drink water, sleep early.', moves:'moves', todaySession:"Today's session", 
     headerSub:'Your plan. Your hours. Your progress.',
     tabTrain:'Train', tabPrograms:'Programs', tabCreate:'Create', tabMeals:'Meals', tabProgress:'Progress', tabClub:'Club',
     workoutProgram:'Work Out Program', allPrograms:'All programs',
@@ -44,6 +45,7 @@ window.I18N = {
     iphone:'iPhone', android:'Android'
   },
   fr:{
+    goodMorning:'Bonjour', goodAfternoon:'Bon après-midi', goodEvening:'Bonsoir', sets:'séries', reps:'répétitions', restLbl:'repos', load:'charge', markDone:'Marquer fait', completed:'Terminé', recoverLine:'La récupération fait partie du plan. Marchez, étirez-vous, buvez, dormez tôt.', moves:'exercices', todaySession:'Séance du jour', 
     headerSub:'Votre plan. Vos horaires. Votre progression.',
     tabTrain:'Séance', tabPrograms:'Programmes', tabCreate:'Créer', tabMeals:'Repas', tabProgress:'Progrès', tabClub:'Club',
     workoutProgram:'Programme d’entraînement', allPrograms:'Tous les programmes',
@@ -82,6 +84,7 @@ window.I18N = {
     iphone:'iPhone', android:'Android'
   },
   es:{
+    goodMorning:'Buenos días', goodAfternoon:'Buenas tardes', goodEvening:'Buenas noches', sets:'series', reps:'reps', restLbl:'descanso', load:'carga', markDone:'Marcar hecho', completed:'Hecho', recoverLine:'La recuperación es parte del plan. Camina, estira, bebe agua, duerme temprano.', moves:'ejercicios', todaySession:'Sesión de hoy', 
     headerSub:'Tu plan. Tus horas. Tu progreso.',
     tabTrain:'Entreno', tabPrograms:'Programas', tabCreate:'Crear', tabMeals:'Comidas', tabProgress:'Progreso', tabClub:'Club',
     workoutProgram:'Programa de entrenamiento', allPrograms:'Todos los programas',
